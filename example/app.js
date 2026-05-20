@@ -1,5 +1,5 @@
 const { Builder } = require('selenium-webdriver')
-const pleaseClass = require('./master/input')
+const pleaseClass = require('please.js')
 const AuthComponent = require('./components/auth')
 
 const driver = new Builder().forBrowser('chrome').build()

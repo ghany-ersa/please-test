@@ -1,24 +1,34 @@
 {
-    "name": "automate-pos-bigio",
+    "name": "please.js",
     "version": "1.0.0",
-    "description": "Automation Testing with Selenium JavaScript and mochawesome to report",
+    "description": "Selenium WebDriver abstraction library for expressive and readable automation testing",
+    "main": "master/input.js",
     "scripts": {
-        "test": "mocha --recursive --timeout 100000 index.js",
-        "report": "mocha --recursive --timeout 100000 index.js --reporter mochawesome --reporter-options code=false,charts=true,assetsDir=report/assets/asserts,reportDir=report/v2,reportFilename=index,reportPageTitle=Please.js"
+        "test": "mocha --recursive --timeout 100000 example/index.js",
+        "report": "mocha --recursive --timeout 100000 example/index.js --reporter mochawesome --reporter-options code=false,charts=true,assetsDir=example/report/assets,reportDir=example/report/v2,reportFilename=index,reportPageTitle=Please.js"
     },
-    "repository": "git@gitlab.com:bigio/aplikasi360/pos/POS-test.git",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/yourusername/please.js.git"
+    },
+    "keywords": ["selenium", "webdriver", "automation", "testing", "e2e"],
     "author": "Myghan <ghanyersa24@gmail.com>",
     "license": "MIT",
     "dependencies": {
-        "dotenv": "^16.0.0",
         "selenium-webdriver": "^4.44.0"
     },
     "devDependencies": {
+        "dotenv": "^16.0.0",
         "mocha": "^11.7.5",
         "mochawesome": "^7.1.4"
     },
+    "peerDependencies": {
+        "selenium-webdriver": "^4.0.0"
+    },
     "engines": {
-        "node": ">=8.0.0",
-        "yarn": ">=1.0.0"
-    }
+        "node": ">=14.0.0"
+    },
+    "files": [
+        "master/"
+    ]
 }

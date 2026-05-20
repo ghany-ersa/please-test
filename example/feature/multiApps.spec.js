@@ -1,5 +1,5 @@
 const { please } = require('../app')
-const pleaseClass = require('../master/input')
+const pleaseClass = require('please.js')
 const { URL } = require('../data/main')
 
 describe('Coba multi apps', () => {

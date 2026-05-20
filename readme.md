@@ -1,71 +1,227 @@
 # please.js
 
-**please.js** adalah automation testing tool buatan sendiri berbasis Selenium WebDriver dan JavaScript. Dibangun di atas layer abstraksi `pleaseClass` yang menyederhanakan interaksi DOM agar test case bisa ditulis lebih ringkas dan ekspresif.
+**please.js** adalah Selenium WebDriver abstraction library untuk JavaScript yang menyederhanakan interaksi DOM agar automation test bisa ditulis lebih ringkas dan ekspresif.
 
 ## Filosofi
 
 Daripada menulis boilerplate Selenium berulang kali di setiap test, please.js membungkus operasi umum (klik, input, scroll, wait, assertion) ke dalam satu objek `please` yang bisa langsung dipakai di semua spec file.
 
-## Prasyarat
-
-- Node.js >= 8.0.0
-- Yarn >= 1.0.0 atau npm >= 6.0.0
-- Google Chrome + ChromeDriver (versi harus sesuai dengan Chrome yang terinstall)
-
-## Setup
-
-Pastikan [Node.js](https://nodejs.org) sudah terinstall, lalu install dependencies:
+## Instalasi
 
 ```sh
-# menggunakan Yarn
-yarn install
-
-# menggunakan npm
-npm install
+npm install please.js selenium-webdriver
 ```
 
-Salin `.env.example` menjadi `.env` dan isi dengan nilai yang sesuai:
+> `selenium-webdriver` adalah peer dependency — perlu diinstall di project kamu. ChromeDriver dikelola otomatis oleh `selenium-manager` bawaan Selenium 4.
 
-```sh
-cp .env.example .env
+## Penggunaan
+
+### 1. Setup
+
+Buat `app.js` sebagai entry point yang menginisialisasi browser dan mengekspos `please`:
+
+```js
+// app.js
+const { Builder } = require('selenium-webdriver')
+const pleaseClass = require('please.js')
+
+const driver = new Builder().forBrowser('chrome').build()
+driver.manage().window().maximize()
+
+const please = new pleaseClass(driver)
+module.exports = { please }
 ```
 
-```env
-BASE_URL=http://your-app-url.com
+### 2. Test sederhana
 
-ACCOUNT_EMAIL=your@email.com
-ACCOUNT_PASSWORD=yourpassword
+```js
+// feature/login.spec.js
+const { please } = require('../app')
 
-ACCOUNT_NIK=your_nik
-ACCOUNT_PIN=your_pin
+describe('Login', () => {
+    it('menampilkan halaman login', async() => {
+        await please.goTo({ url: 'https://myapp.com/login', title: 'Login' })
+    })
 
-STORE_SLUG=your_store_slug
+    it('login berhasil', async() => {
+        await please.goTo({ url: 'https://myapp.com/login', title: 'Login' })
+        await please.fill('input email', '#email', 'user@mail.com')
+        await please.fill('input password', '#password', 'secret')
+        await please.click('button login', '//button[@type="submit"]')
+        await please.checkWhere({ url: 'https://myapp.com/dashboard', title: 'Dashboard' })
+    })
+
+    it('login gagal dengan password salah', async() => {
+        await please.goTo({ url: 'https://myapp.com/login', title: 'Login' })
+        await please.fill('input email', '#email', 'user@mail.com')
+        await please.fill('input password', '#password', 'wrongpassword')
+        await please.click('button login', '//button[@type="submit"]')
+        await please.checkWhere({ url: 'https://myapp.com/login', title: 'Login' })
+    })
+})
 ```
 
-> File `.env` tidak boleh di-commit — sudah masuk `.gitignore`.
+### 3. Membungkus aksi berulang ke dalam Komponen
+
+Kalau aksi yang sama dipakai di banyak test (seperti login), bungkus ke dalam komponen:
+
+```js
+// components/auth.js
+class Auth {
+    constructor(please) { this.please = please }
+
+    async login(email, password) {
+        await this.please.fill('input email', '#email', email)
+        await this.please.fill('input password', '#password', password)
+        await this.please.click('button login', '//button[@type="submit"]')
+    }
+
+    async logout() {
+        await this.please.click('menu profil', '.user-menu')
+        await this.please.click('button logout', 'link=Logout')
+    }
+}
+module.exports = Auth
+```
+
+```js
+// app.js — daftarkan komponen di sini
+const { Builder } = require('selenium-webdriver')
+const pleaseClass = require('please.js')
+const Auth = require('./components/auth')
+
+const driver = new Builder().forBrowser('chrome').build()
+driver.manage().window().maximize()
+
+const please = new pleaseClass(driver)
+
+module.exports = {
+    please,
+    AUTH: new Auth(please)
+}
+```
+
+```js
+// feature/login.spec.js — test jadi lebih ringkas
+const { please, AUTH } = require('../app')
+
+describe('Login', () => {
+    it('login berhasil', async() => {
+        await please.goTo({ url: 'https://myapp.com/login', title: 'Login' })
+        await AUTH.login('user@mail.com', 'secret')
+        await please.checkWhere({ url: 'https://myapp.com/dashboard', title: 'Dashboard' })
+        await AUTH.logout()
+    })
+})
+```
+
+### 4. Membaca dan memverifikasi nilai
+
+```js
+it('menampilkan nama user setelah login', async() => {
+    await AUTH.login('user@mail.com', 'secret')
+
+    const nama = await please.getText('nama user', '.user-display-name')
+    await please.equal(nama, 'John Doe')
+
+    const inputNama = await please.getValue('field nama', '#profile-name')
+    await please.notEqual(inputNama, '')
+})
+```
+
+### 5. Menjalankan test di beberapa browser sekaligus
+
+```js
+// app.js
+const { Builder } = require('selenium-webdriver')
+const pleaseClass = require('please.js')
+
+const driverA = new Builder().forBrowser('chrome').build()
+driverA.manage().window().maximize()
+
+const please = new pleaseClass(driverA)
+const pleaseB = new pleaseClass(await please.launchBrowser())
+
+module.exports = { please, pleaseB }
+```
+
+```js
+// feature/multiTab.spec.js
+const { please, pleaseB } = require('../app')
+
+describe('Multi browser', () => {
+    it('dua user login bersamaan', async() => {
+        await please.goTo({ url: 'https://myapp.com/login', title: 'Login' })
+        await pleaseB.goTo({ url: 'https://myapp.com/login', title: 'Login' })
+
+        await please.fill('email user A', '#email', 'userA@mail.com')
+        await pleaseB.fill('email user B', '#email', 'userB@mail.com')
+
+        await please.quit()
+        await pleaseB.quit()
+    })
+})
+```
+
+### 6. Struktur project yang direkomendasikan
+
+```
+my-project/
+├── app.js              # Inisialisasi driver dan ekspos please & komponen
+├── index.js            # Daftar spec yang dijalankan
+├── components/         # Aksi berulang per fitur
+│   ├── auth.js
+│   └── checkout.js
+├── feature/            # Test suite per fitur
+│   ├── login.spec.js
+│   └── checkout.spec.js
+├── data/               # URL dan data test
+│   └── main.js
+├── .env                # Konfigurasi environment (tidak di-commit)
+└── package.json
+```
+
+```js
+// index.js — aktifkan spec yang ingin dijalankan
+require('./feature/login.spec')
+require('./feature/checkout.spec')
+```
+
+```json
+// package.json
+{
+    "scripts": {
+        "test": "mocha --recursive --timeout 100000 index.js"
+    },
+    "dependencies": {
+        "please.js": "^1.0.0",
+        "selenium-webdriver": "^4.0.0"
+    },
+    "devDependencies": {
+        "mocha": "^11.0.0",
+        "dotenv": "^16.0.0"
+    }
+}
+```
 
 ## Struktur Project
 
 ```
 please.js/
-├── app.js              # Entry point — inisialisasi driver dan ekspos please & komponen
-├── index.js            # Daftar spec yang dijalankan — tambahkan require() spec baru di sini
 ├── master/
 │   ├── input.js        # pleaseClass — inti dari semua aksi DOM
 │   └── assert.js       # Helper assertion (equal, notEqual, fail, checkTitle)
-├── components/
-│   └── auth.js         # Komponen login (email/password & NIK/PIN)
-├── feature/
-│   ├── auth.spec.js    # Test suite autentikasi
-│   └── multiApps.spec.js
-├── data/
-│   └── main.js         # URL dan data akun test
-└── report/             # Output laporan mochawesome
+└── example/            # Contoh implementasi lengkap
+    ├── app.js
+    ├── index.js
+    ├── components/
+    ├── feature/
+    └── data/
 ```
 
 ## API please
 
-`please` adalah instance dari `pleaseClass` — objek utama untuk berinteraksi dengan browser.
+`please` adalah instance dari `pleaseClass`.
 
 ### Navigasi
 
@@ -116,19 +272,19 @@ please.js/
 
 ### Auto-detect Selector
 
-Semua method yang menerima `selector` akan otomatis mendeteksi tipe locator berdasarkan format string:
+Semua method yang menerima `selector` otomatis mendeteksi tipe locator dari format string:
 
 | Format | Tipe | Contoh |
 |---|---|---|
 | Diawali `//` atau `(//` | XPath | `//button[@type="submit"]` |
 | Diawali `#` | ID | `#email` |
-| Diawali `.`, `[`, atau mengandung spasi/`>`/`:` | CSS | `.btn-primary`, `form > button` |
+| Diawali `.`, `[`, atau mengandung `.`, `#`, `[`, `:`, spasi, `>`, `+`, `~` | CSS | `.btn-primary`, `button.primary`, `form > button` |
 | Diawali `link=` | Link Text | `link=Klik di sini` |
 | Teks biasa | Name | `email` |
 
 ## Membuat Komponen
 
-Komponen membungkus aksi-aksi yang sering dipakai ulang untuk satu fitur tertentu.
+Komponen membungkus aksi yang sering dipakai ulang untuk satu fitur tertentu.
 
 ```js
 // components/auth.js
@@ -144,40 +300,11 @@ class Auth {
 module.exports = Auth
 ```
 
-## Menulis Test
+## Prasyarat
 
-```js
-// feature/auth.spec.js
-const { please, AUTH } = require('../app')
-const { URL, ACCOUNT } = require('../data/main')
+- Node.js >= 14.0.0
+- Google Chrome (ChromeDriver dikelola otomatis)
 
-describe('Login', () => {
-    it('login berhasil', async () => {
-        await please.goTo(URL.loginEmailPassword)
-        await AUTH.loginEmail(ACCOUNT.main)
-        await please.checkWhere(URL.main)
-    })
-})
-```
+## Lisensi
 
-Daftarkan spec yang ingin dijalankan di `index.js`:
-
-```js
-// index.js
-require('./feature/auth.spec')
-require('./feature/multiApps.spec')
-```
-
-## Menjalankan Test
-
-```sh
-# Jalankan semua test
-yarn test
-# atau
-npm test
-
-# Jalankan test dengan laporan HTML (output di report/v2/index.html)
-yarn report
-# atau
-npm run report
-```
+MIT
