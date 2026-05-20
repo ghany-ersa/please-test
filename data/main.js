@@ -1,4 +1,8 @@
-const base_url = 'http://manage.bisoul.bigio.id'
+require('dotenv').config()
+
+const base_url = process.env.BASE_URL
+const store_slug = process.env.STORE_SLUG
+
 module.exports = {
     URL: {
         main: {
@@ -10,51 +14,50 @@ module.exports = {
             title: 'Login BACKOFFICE:POS'
         },
         loginNIKPIN: {
-            url: `${base_url}/login/store/testo`,
+            url: `${base_url}/login/store/${store_slug}`,
             title: 'Login BACKOFFICE:POS'
         },
         loginNIKPINSalah: {
-            url: `${base_url}/login/store/test`,
+            url: `${base_url}/login/store/${store_slug}-salah`,
             title: 'Login BACKOFFICE:POS'
         },
-
     },
     ACCOUNT: {
         main: {
-            email: 'test@gmail.com',
-            password: '@Bigio000'
+            email: process.env.ACCOUNT_EMAIL,
+            password: process.env.ACCOUNT_PASSWORD
         },
         salahEmail: {
-            email: 'test@gmail',
-            password: '@Bigio000'
+            email: 'invalid@email',
+            password: process.env.ACCOUNT_PASSWORD
         },
         salahPassword: {
-            email: 'test@gmail.com',
-            password: 'Bigio'
+            email: process.env.ACCOUNT_EMAIL,
+            password: 'wrongpassword'
         },
         kosongSemua: {
             email: '',
             password: ''
         },
         kosongPassword: {
-            email: 'test@gmail.com',
+            email: process.env.ACCOUNT_EMAIL,
             password: ''
         },
         kosongEmail: {
             email: '',
-            password: '@Bigio000'
+            password: process.env.ACCOUNT_PASSWORD
         },
         NIKPIN: {
-            nik: 2412970003,
-            pin: '000000'
+            nik: process.env.ACCOUNT_NIK,
+            pin: process.env.ACCOUNT_PIN
         },
         companyLain: {
             nik: '000000',
             pin: '000000'
         },
         outletLain: {
-            nik: 0011,
-            pin: 111111
+            nik: '0011',
+            pin: '111111'
         },
         NIKPINKosong: {
             nik: '',
@@ -62,10 +65,10 @@ module.exports = {
         },
         nikKosong: {
             nik: '',
-            pin: '000000'
+            pin: process.env.ACCOUNT_PIN
         },
         pinKosong: {
-            nik: 2412970003,
+            nik: process.env.ACCOUNT_NIK,
             pin: ''
         }
     }
