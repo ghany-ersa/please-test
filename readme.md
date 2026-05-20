@@ -9,7 +9,7 @@ Daripada menulis boilerplate Selenium berulang kali di setiap test, please.js me
 ## Instalasi
 
 ```sh
-npm install please.js selenium-webdriver
+npm install please-test selenium-webdriver
 ```
 
 > `selenium-webdriver` adalah peer dependency — perlu diinstall di project kamu. ChromeDriver dikelola otomatis oleh `selenium-manager` bawaan Selenium 4.
@@ -23,7 +23,7 @@ Buat `app.js` sebagai entry point yang menginisialisasi browser dan mengekspos `
 ```js
 // app.js
 const { Builder } = require('selenium-webdriver')
-const pleaseClass = require('please.js')
+const pleaseClass = require('please-test')
 
 const driver = new Builder().forBrowser('chrome').build()
 driver.manage().window().maximize()
@@ -87,7 +87,7 @@ module.exports = Auth
 ```js
 // app.js — daftarkan komponen di sini
 const { Builder } = require('selenium-webdriver')
-const pleaseClass = require('please.js')
+const pleaseClass = require('please-test')
 const Auth = require('./components/auth')
 
 const driver = new Builder().forBrowser('chrome').build()
@@ -134,7 +134,7 @@ it('menampilkan nama user setelah login', async() => {
 ```js
 // app.js
 const { Builder } = require('selenium-webdriver')
-const pleaseClass = require('please.js')
+const pleaseClass = require('please-test')
 
 const driverA = new Builder().forBrowser('chrome').build()
 driverA.manage().window().maximize()
@@ -194,7 +194,7 @@ require('./feature/checkout.spec')
         "test": "mocha --recursive --timeout 100000 index.js"
     },
     "dependencies": {
-        "please.js": "^1.0.0",
+        "please-test": "^1.0.0",
         "selenium-webdriver": "^4.0.0"
     },
     "devDependencies": {
