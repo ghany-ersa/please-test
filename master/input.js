@@ -14,7 +14,7 @@ class pleaseClass {
     }
 
     quit = async() => {
-        this.driver.quit()
+        await this.driver.quit()
     }
 
     url = async() => {
@@ -22,7 +22,7 @@ class pleaseClass {
     }
 
     title = async() => {
-        await this.driver.getTitle()
+        return this.driver.getTitle()
     }
 
     goTo = async expected => {
@@ -53,10 +53,10 @@ class pleaseClass {
             return By.xpath(selector)
         if (selector.startsWith('#'))
             return By.id(selector.slice(1))
-        if (selector.startsWith('.') || selector.startsWith('[') || /[\s>:+~]/.test(selector))
-            return By.css(selector)
         if (selector.startsWith('link='))
             return By.linkText(selector.slice(5))
+        if (selector.startsWith('.') || selector.startsWith('[') || /[\s>:+~]/.test(selector) || /[.#\[:]/.test(selector))
+            return By.css(selector)
         return By.name(selector)
     }
 
@@ -131,7 +131,14 @@ class pleaseClass {
     }
 
     clear = async(label, selector) => {
-        await this.toElement(selector).clear()
+        const t0 = performance.now()
+        await this.untilShow(label, selector)
+        try {
+            await this.toElement(selector).clear()
+        } catch {
+            const elapsed = ((performance.now() - t0) / 1000).toFixed(2)
+            fail(`Element "${label}" tidak dapat dikosongkan setelah ${elapsed} detik`)
+        }
     }
 
     wait = async(time = 2000) => {

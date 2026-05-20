@@ -1,11 +1,13 @@
-const { Builder, Key, By, until } = require('selenium-webdriver')
-const driver = new Builder().forBrowser('chrome').build(),
-    pleaseClass = require('./master/input'),
-    AuthComponent = require('./components/auth'),
-    please = new pleaseClass(driver)
+const { Builder } = require('selenium-webdriver')
+const pleaseClass = require('./master/input')
+const AuthComponent = require('./components/auth')
 
+const driver = new Builder().forBrowser('chrome').build()
 driver.manage().window().maximize()
+
+const please = new pleaseClass(driver)
+
 module.exports = {
-    please: please,
+    please,
     AUTH: new AuthComponent(please)
 }
