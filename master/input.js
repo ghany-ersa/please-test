@@ -9,7 +9,7 @@ class pleaseClass {
     constructor(driver) {
         this.driver = driver
     }
-    newTab = async() => {
+    launchBrowser = async() => {
         const driver = new Builder().forBrowser('chrome').build()
         await driver.manage().window().maximize()
         return driver
@@ -108,7 +108,7 @@ class pleaseClass {
         }
     }
 
-    setInput = async(name, type, id, value) => {
+    fill = async(name, type, id, value) => {
         const t0 = performance.now()
         await this.untilShow(name, type, id)
         try {
@@ -127,7 +127,7 @@ class pleaseClass {
             fail(`Element "${name}" tidak dapat menerima input, sudah terjeda ${time} detik`)
         }
     }
-    setInputText = async(name, type, id, value) => {
+    fillAndEnter = async(name, type, id, value) => {
         const t0 = performance.now()
         await this.untilShow(name, type, id)
         try {
@@ -193,7 +193,7 @@ class pleaseClass {
     }
 
     datepicker = async(name, type, id, value) => {
-        await this.setInputText(name, type, id, value)
+        await this.fillAndEnter(name, type, id, value)
     }
 
     clear = async(type, id) => {
@@ -406,7 +406,7 @@ module.exports = pleaseClass
 //             }
 //         },
 //         async datepicker(name, type, id, value) {
-//             await this.setInputText(name, type, id, value)
+//             await this.fillAndEnter(name, type, id, value)
 //         },
 //         async clear(type, id) {
 //             if (type == 'id')

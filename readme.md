@@ -35,8 +35,8 @@ please.js/
 | `please.goTo({ url, title })` | Navigasi ke URL dan verifikasi title halaman |
 | `please.checkWhere({ url, title })` | Cek posisi halaman saat ini |
 | `please.click(name, type, id)` | Klik elemen dengan auto-scroll dan wait |
-| `please.setInput(name, type, id, value)` | Isi input field |
-| `please.setInputText(name, type, id, value)` | Isi input dan tekan Enter |
+| `please.fill(name, type, id, value)` | Isi input field |
+| `please.fillAndEnter(name, type, id, value)` | Isi input dan tekan Enter |
 | `please.getInput(name, type, id)` | Ambil value dari input field |
 | `please.getText(name, type, id)` | Ambil text dari elemen |
 | `please.clear(type, id)` | Kosongkan input field |
@@ -47,7 +47,7 @@ please.js/
 | `please.equal(type, actual, expected)` | Assertion equal |
 | `please.notEqual(type, actual, expected)` | Assertion not equal |
 | `please.fail(message)` | Gagalkan test secara manual |
-| `please.newTab()` | Buka browser baru |
+| `please.launchBrowser()` | Buka browser baru |
 | `please.quit()` | Tutup browser |
 
 **Selector yang didukung:** `id`, `name`, `css`, `xpath`, `link`
@@ -62,8 +62,8 @@ class Auth {
     constructor(master) { this.please = master }
 
     async loginEmail(user) {
-        await this.please.setInput('input email', 'id', 'email', user.email)
-        await this.please.setInput('input password', 'id', 'password', user.password)
+        await this.please.fill('input email', 'id', 'email', user.email)
+        await this.please.fill('input password', 'id', 'password', user.password)
         await this.please.click('button login', 'xpath', '//button[@type="submit"]')
     }
 }

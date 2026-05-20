@@ -5,13 +5,13 @@ class Auth {
     }
 
     async loginEmail(user) {
-        await please.setInput('input email', 'id', 'email', user.email)
-        await please.setInput('input password', 'id', 'password', user.password)
+        await please.fill('input email', 'id', 'email', user.email)
+        await please.fill('input password', 'id', 'password', user.password)
         await please.click('button login', 'xpath', '//*[@id="login-form"]/div[2]/form/div[4]/div/button')
     }
     async loginNIK(user) {
-        await please.setInput('input NIK', 'id', 'nik', user.nik)
-        await please.setInput('input PIN', 'id', 'password', user.pin)
+        await please.fill('input NIK', 'id', 'nik', user.nik)
+        await please.fill('input PIN', 'id', 'password', user.pin)
         await please.click('button login', 'xpath', '//*[@id="login-form"]/div[2]/form/div[4]/div/button')
     }
     async logout() {
