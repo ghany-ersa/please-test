@@ -1,7 +1,4 @@
 node_modules
 *.log
 .env
-/.idea/big-pos-test.iml
-/.idea/misc.xml
-/.idea/modules.xml
-/.idea/vcs.xml
+.idea/

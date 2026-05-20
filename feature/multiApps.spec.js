@@ -10,8 +10,8 @@ describe('Coba multi apps', () => {
         const bo = new pleaseClass(driver)
         bo.goTo(URL.loginEmailPassword)
 
-        await please.fill('email', 'id', 'email', 'lalalala')
-        await bo.setInput('email', 'id', 'email', 'inputan BO')
+        await please.fill('email', '#email', 'lalalala')
+        await bo.fill('email', '#email', 'inputan BO')
         await bo.quit()
     });
 })

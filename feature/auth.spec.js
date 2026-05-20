@@ -43,7 +43,7 @@ describe('Login Email & Password', () => {
 describe('Login NIK & PIN', () => {
     it('login url salah', async() => {
         await please.goTo(URL.loginNIKPINSalah)
-        please.notEqual('custom', please.title(), URL.main.title, 'Harusnya alamat url nik pin salah')
+        please.notEqual(please.title(), URL.main.title, 'Harusnya alamat url nik pin salah')
     })
     it('nik pin company lain', async() => {
         await please.goTo(URL.loginNIKPIN)

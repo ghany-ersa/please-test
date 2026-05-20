@@ -2,7 +2,6 @@
     "name": "automate-pos-bigio",
     "version": "1.0.0",
     "description": "Automation Testing with Selenium JavaScript and mochawesome to report",
-    "main": "test.js",
     "scripts": {
         "test": "mocha --recursive --timeout 100000 index.js",
         "report": "mocha --recursive --timeout 100000 index.js --reporter mochawesome --reporter-options code=false,charts=true,assetsDir=report/assets/asserts,reportDir=report/v2,reportFilename=index,reportPageTitle=Please.js"
@@ -11,14 +10,12 @@
     "author": "Myghan <ghanyersa24@gmail.com>",
     "license": "MIT",
     "dependencies": {
-        "chromedriver": "^2.46.0",
         "dotenv": "^16.0.0",
-        "selenium-webdriver": "^4.0.0-alpha.1"
+        "selenium-webdriver": "^4.44.0"
     },
     "devDependencies": {
-        "mocha": "^7.2.0",
-        "mochawesome": "^6.1.1",
-        "mochawesome-screenshots": "^1.6.0"
+        "mocha": "^11.7.5",
+        "mochawesome": "^7.1.4"
     },
     "engines": {
         "node": ">=8.0.0",
