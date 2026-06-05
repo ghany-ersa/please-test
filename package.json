@@ -9,7 +9,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/yourusername/please.js.git"
+        "url": "git+https://github.com/ghany-ersa/please-test.git"
     },
     "keywords": [
         "selenium",
@@ -18,7 +18,7 @@
         "testing",
         "e2e"
     ],
-    "author": "Myghan <ghanyersa24@gmail.com>",
+    "author": "ghany-ersa <ghanyersa24@gmail.com>",
     "license": "MIT",
     "dependencies": {
         "selenium-webdriver": "^4.44.0"
