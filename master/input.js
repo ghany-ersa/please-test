@@ -126,6 +126,24 @@ class pleaseClass {
         }
     }
 
+    see = async(label, selector, time = undefined) => {
+        const t0 = performance.now()
+        await this.untilShow(label, selector)
+        if (time !== undefined)
+            await this.wait(time)
+        try {
+            const el = await this.toElement(selector)
+            const tag = await el.getTagName()
+            const inputTags = ['input', 'textarea', 'select']
+            if (inputTags.includes(tag.toLowerCase()))
+                return await el.getAttribute("value")
+            return await el.getText()
+        } catch {
+            const elapsed = ((performance.now() - t0) / 1000).toFixed(2)
+            fail(`Element "${label}" tidak dapat dibaca setelah ${elapsed} detik`)
+        }
+    }
+
     datepicker = async(label, selector, value) => {
         await this.fillAndEnter(label, selector, value)
     }

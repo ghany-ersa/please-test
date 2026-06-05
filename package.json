@@ -1,6 +1,6 @@
 {
     "name": "please-test",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Selenium WebDriver abstraction library for expressive and readable automation testing",
     "main": "master/input.js",
     "scripts": {
