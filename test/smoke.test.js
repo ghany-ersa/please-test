@@ -186,12 +186,15 @@ async function run() {
     }
 
     try {
-        await please.driver.get('https://the-internet.herokuapp.com/login')
-        await please.fill('Username', '#username', 'tomsmith')
-        await please.fill('Password', '#password', 'SuperSecretPassword!')
-        await please.click('Login Button', 'button[type="submit"]')
-        await please.wait(1000)
-        const url = await please.url()
+        // pakai instance baru agar tidak terkontaminasi session login dari fillAndEnter()
+        const p3 = new pleaseClass()
+        await p3.driver.get('https://the-internet.herokuapp.com/login')
+        await p3.fill('Username', '#username', 'tomsmith')
+        await p3.fill('Password', '#password', 'SuperSecretPassword!')
+        await p3.click('Login Button', 'button[type="submit"]')
+        await p3.wait(1000)
+        const url = await p3.url()
+        await p3.quit()
         if (url.includes('/secure')) PASS('click() — klik button submit berhasil, redirect ke /secure')
         else FAIL(`click() tidak redirect ke /secure, url: ${url}`)
     } catch (e) {
