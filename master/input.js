@@ -2,6 +2,8 @@ const { Builder, Key, By, until } = require('selenium-webdriver')
 const { Options } = require('selenium-webdriver/chrome')
 const { performance } = require('perf_hooks')
 const { checkTitle, equal, notEqual, fail } = require('./assert')
+const fs = require('fs')
+const path = require('path')
 
 class pleaseClass {
     constructor({ headed = false } = {}) {
@@ -74,7 +76,7 @@ class pleaseClass {
             await this.toElement(selector).click()
         } catch {
             const elapsed = ((performance.now() - t0) / 1000).toFixed(2)
-            fail(`Element "${label}" tidak dapat di-klik setelah ${elapsed} detik`)
+            await this._failWithScreenshot(label, `Element "${label}" tidak dapat di-klik setelah ${elapsed} detik`)
         }
     }
 
@@ -85,7 +87,7 @@ class pleaseClass {
             await this.toElement(selector).sendKeys(value)
         } catch {
             const elapsed = ((performance.now() - t0) / 1000).toFixed(2)
-            fail(`Element "${label}" tidak dapat menerima input setelah ${elapsed} detik`)
+            await this._failWithScreenshot(label, `Element "${label}" tidak dapat menerima input setelah ${elapsed} detik`)
         }
     }
 
@@ -96,7 +98,7 @@ class pleaseClass {
             await this.toElement(selector).sendKeys(value, Key.RETURN)
         } catch {
             const elapsed = ((performance.now() - t0) / 1000).toFixed(2)
-            fail(`Element "${label}" tidak dapat menerima input setelah ${elapsed} detik`)
+            await this._failWithScreenshot(label, `Element "${label}" tidak dapat menerima input setelah ${elapsed} detik`)
         }
     }
 
@@ -109,7 +111,7 @@ class pleaseClass {
             return await this.toElement(selector).getAttribute("value")
         } catch {
             const elapsed = ((performance.now() - t0) / 1000).toFixed(2)
-            fail(`Element "${label}" tidak dapat diambil nilainya setelah ${elapsed} detik`)
+            await this._failWithScreenshot(label, `Element "${label}" tidak dapat diambil nilainya setelah ${elapsed} detik`)
         }
     }
 
@@ -122,7 +124,7 @@ class pleaseClass {
             return await this.toElement(selector).getText()
         } catch {
             const elapsed = ((performance.now() - t0) / 1000).toFixed(2)
-            fail(`Element "${label}" tidak dapat diambil teksnya setelah ${elapsed} detik`)
+            await this._failWithScreenshot(label, `Element "${label}" tidak dapat diambil teksnya setelah ${elapsed} detik`)
         }
     }
 
@@ -140,7 +142,7 @@ class pleaseClass {
             return await el.getText()
         } catch {
             const elapsed = ((performance.now() - t0) / 1000).toFixed(2)
-            fail(`Element "${label}" tidak dapat dibaca setelah ${elapsed} detik`)
+            await this._failWithScreenshot(label, `Element "${label}" tidak dapat dibaca setelah ${elapsed} detik`)
         }
     }
 
@@ -155,7 +157,7 @@ class pleaseClass {
             await this.toElement(selector).clear()
         } catch {
             const elapsed = ((performance.now() - t0) / 1000).toFixed(2)
-            fail(`Element "${label}" tidak dapat dikosongkan setelah ${elapsed} detik`)
+            await this._failWithScreenshot(label, `Element "${label}" tidak dapat dikosongkan setelah ${elapsed} detik`)
         }
     }
 
@@ -171,7 +173,7 @@ class pleaseClass {
             await this.wait()
         } catch {
             const elapsed = ((performance.now() - t0) / 1000).toFixed(2)
-            fail(`Element "${label}" tidak dapat menerima file setelah ${elapsed} detik`)
+            await this._failWithScreenshot(label, `Element "${label}" tidak dapat menerima file setelah ${elapsed} detik`)
         }
     }
 
@@ -182,7 +184,7 @@ class pleaseClass {
             await this.driver.executeScript("arguments[0].scrollIntoView();", this.toElement(selector))
         } catch {
             const elapsed = ((performance.now() - t0) / 1000).toFixed(2)
-            fail(`Element "${label}" tidak dapat di-scroll setelah ${elapsed} detik`)
+            await this._failWithScreenshot(label, `Element "${label}" tidak dapat di-scroll setelah ${elapsed} detik`)
         }
     }
 
@@ -190,8 +192,49 @@ class pleaseClass {
         try {
             await this.driver.wait(until.elementLocated(this.detectLocator(selector)), time)
         } catch {
-            fail(`Element "${label}" tidak muncul setelah ${time / 1000} detik`)
+            await this._failWithScreenshot(label, `Element "${label}" tidak muncul setelah ${time / 1000} detik`)
         }
+    }
+
+    setTestName = (name) => {
+        this._testName = name
+    }
+
+    _resolveTestName = (label) => {
+        if (label) return label
+        if (this._testName) return this._testName
+        if (global.__currentTest) return global.__currentTest
+        return null
+    }
+
+    screenshot = async (label) => {
+        const dir = path.resolve('screenshots')
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+        const datetime = new Date().toISOString().replace(/[:.]/g, '-')
+        const resolved = this._resolveTestName(label)
+        const slug = resolved
+            ? `${resolved.replace(/[^a-zA-Z0-9_-]/g, '_')}_${datetime}`
+            : datetime
+        const name = `${slug}.png`
+        const img = await this.driver.takeScreenshot()
+        fs.writeFileSync(path.join(dir, name), img, 'base64')
+        return path.join(dir, name)
+    }
+
+    test = async (label, fn) => {
+        try {
+            await fn()
+            const savedPath = await this.screenshot(`PASSED_${label}`)
+            console.log(`  [screenshot] ${savedPath}`)
+        } catch (e) {
+            throw e
+        }
+    }
+
+    _failWithScreenshot = async (label, message) => {
+        const savedPath = await this.screenshot(`FAILED_${label}`)
+        console.error(`  [screenshot] ${savedPath}`)
+        fail(message)
     }
 }
 module.exports = pleaseClass

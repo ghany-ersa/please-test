@@ -1,6 +1,6 @@
 {
     "name": "please-test",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "Selenium WebDriver abstraction library for expressive and readable automation testing",
     "main": "master/input.js",
     "scripts": {
@@ -20,7 +20,7 @@
     "author": "ghany-ersa <ghanyersa24@gmail.com>",
     "license": "MIT",
     "peerDependencies": {
-        "selenium-webdriver": "^4.0.0"
+        "selenium-webdriver": "^4.45.0"
     },
     "engines": {
         "node": ">=14.0.0"
