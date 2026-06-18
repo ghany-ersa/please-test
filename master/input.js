@@ -1,16 +1,14 @@
 const { Builder, Key, By, until } = require('selenium-webdriver')
+const { Options } = require('selenium-webdriver/chrome')
 const { performance } = require('perf_hooks')
 const { checkTitle, equal, notEqual, fail } = require('./assert')
 
 class pleaseClass {
-    constructor(driver) {
-        this.driver = driver
-    }
-
-    launchBrowser = async() => {
-        const driver = new Builder().forBrowser('chrome').build()
-        await driver.manage().window().maximize()
-        return driver
+    constructor({ headed = false } = {}) {
+        const options = new Options()
+        if (!headed) options.addArguments('--headless=new')
+        this.driver = new Builder().forBrowser('chrome').setChromeOptions(options).build()
+        this.driver.manage().window().maximize()
     }
 
     quit = async() => {
@@ -56,6 +54,8 @@ class pleaseClass {
         if (selector.startsWith('link='))
             return By.linkText(selector.slice(5))
         if (selector.startsWith('.') || selector.startsWith('[') || /[\s>:+~]/.test(selector) || /[.#\[:]/.test(selector))
+            return By.css(selector)
+        if (/^(a|abbr|address|article|aside|audio|b|blockquote|body|br|button|canvas|caption|cite|code|col|colgroup|data|datalist|dd|del|details|dfn|dialog|div|dl|dt|em|embed|fieldset|figcaption|figure|footer|form|h1|h2|h3|h4|h5|h6|head|header|hr|html|i|iframe|img|input|ins|kbd|label|legend|li|link|main|map|mark|menu|meta|meter|nav|noscript|object|ol|optgroup|option|output|p|picture|pre|progress|q|rp|rt|ruby|s|samp|script|section|select|small|source|span|strong|style|sub|summary|sup|table|tbody|td|template|textarea|tfoot|th|thead|time|title|tr|track|u|ul|var|video|wbr)$/.test(selector))
             return By.css(selector)
         return By.name(selector)
     }

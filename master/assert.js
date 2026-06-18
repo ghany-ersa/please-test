@@ -2,7 +2,8 @@ const assert = require('assert')
 
 module.exports = {
     checkTitle: async(actual, expected) => {
-        assert.equal(actual.url, expected.url,
+        const normalize = (url) => url.replace(/\/+$/, '')
+        assert.equal(normalize(actual.url), normalize(expected.url),
             `URL seharusnya "${expected.url}", bukan "${actual.url}".`)
         assert.equal(actual.title, expected.title,
             `Judul halaman seharusnya "${expected.title}", bukan "${actual.title}".`)
