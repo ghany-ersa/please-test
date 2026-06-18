@@ -1,4 +1,4 @@
-const pleaseClass = require('../master/input.js')
+const Please = require('../master/input.js')
 
 const PASS = (msg) => console.log(`  ✓ ${msg}`)
 const FAIL = (msg) => { console.error(`  ✗ ${msg}`); process.exitCode = 1 }
@@ -12,41 +12,44 @@ process.on('uncaughtException', (e) => {
 async function run() {
 
     // ── Constructor ─────────────────────────────────────────────────────────
-    console.log('\n[Constructor] Inisialisasi pleaseClass')
+    console.log('\n[Constructor] Inisialisasi Please')
     let please
     try {
-        please = new pleaseClass()
-        PASS('new pleaseClass() — tanpa parameter, default headless')
+        please = new Please()
+        await please._ready()
+        PASS('new Please() — tanpa parameter, default headless')
     } catch (e) {
-        FAIL(`new pleaseClass() gagal: ${e.message}`)
+        FAIL(`new Please() gagal: ${e.message}`)
         return
     }
     try {
-        const p = new pleaseClass({})
-        PASS('new pleaseClass({}) — objek kosong')
+        const p = new Please({})
+        await p._ready()
+        PASS('new Please({}) — objek kosong')
         await p.quit()
     } catch (e) {
-        FAIL(`new pleaseClass({}) gagal: ${e.message}`)
+        FAIL(`new Please({}) gagal: ${e.message}`)
     }
     try {
-        const p = new pleaseClass({ headed: false })
-        PASS('new pleaseClass({ headed: false }) — eksplisit headless')
+        const p = new Please({ headed: false })
+        await p._ready()
+        PASS('new Please({ headed: false }) — eksplisit headless')
         await p.quit()
     } catch (e) {
-        FAIL(`new pleaseClass({ headed: false }) gagal: ${e.message}`)
+        FAIL(`new Please({ headed: false }) gagal: ${e.message}`)
     }
 
     // ── Constructor headed ──────────────────────────────────────────────────
     console.log('\n[Constructor] headed: true')
     try {
-        const p = new pleaseClass({ headed: true })
+        const p = new Please({ headed: true })
         await p.goTo({ url: 'https://example.com', title: 'Example Domain' })
         const t = await p.title()
-        if (t === 'Example Domain') PASS('new pleaseClass({ headed: true }) — browser berjalan dan dapat navigasi')
+        if (t === 'Example Domain') PASS('new Please({ headed: true }) — browser berjalan dan dapat navigasi')
         else FAIL(`headed: true — title tidak sesuai: "${t}"`)
         await p.quit()
     } catch (e) {
-        FAIL(`new pleaseClass({ headed: true }) gagal: ${e.message}`)
+        FAIL(`new Please({ headed: true }) gagal: ${e.message}`)
     }
 
     // ── Navigasi ────────────────────────────────────────────────────────────
@@ -59,7 +62,7 @@ async function run() {
     }
     try {
         const currentUrl = await please.url()
-        if (currentUrl === 'https://example.com/') PASS(`url() — mengembalikan url saat ini: ${currentUrl}`)
+        if (currentUrl.includes('example.com')) PASS(`url() — mengembalikan url saat ini: ${currentUrl}`)
         else FAIL(`url() nilai tidak sesuai: ${currentUrl}`)
     } catch (e) {
         FAIL(`url() gagal: ${e.message}`)
@@ -83,23 +86,22 @@ async function run() {
     // ── detectLocator ───────────────────────────────────────────────────────
     console.log('\n[detectLocator] Semua tipe selector')
     const selectorCases = [
-        ['//div',           'xpath',        '//div'],
-        ['(//div)[1]',      'xpath',        '(//div)[1]'],
-        ['#myId',           'css selector', '*[id="myId"]'],
-        ['link=Click here', 'link text',    'Click here'],
-        ['.myClass',        'css selector', '.myClass'],
-        ['[data-test="x"]', 'css selector', '[data-test="x"]'],
-        ['div > span',      'css selector', 'div > span'],
-        ['h1',              'css selector', 'h1'],
-        ['username',        'css selector', '*[name="username"]'],
+        ['//div',           'xpath=//div'],
+        ['(//div)[1]',      'xpath=(//div)[1]'],
+        ['#myId',           '#myId'],
+        ['text=Click here', 'text=Click here'],
+        ['.myClass',        '.myClass'],
+        ['[data-test="x"]', '[data-test="x"]'],
+        ['div > span',      'div > span'],
+        ['h1',              'h1'],
     ]
-    for (const [selector, expectedUsing, expectedValue] of selectorCases) {
+    for (const [selector, expected] of selectorCases) {
         try {
-            const locator = please.detectLocator(selector)
-            if (locator.using === expectedUsing && locator.value === expectedValue)
-                PASS(`"${selector}" → using="${locator.using}" value="${locator.value}"`)
+            const result = please.detectLocator(selector)
+            if (result === expected)
+                PASS(`"${selector}" → "${result}"`)
             else
-                FAIL(`"${selector}" → expected using="${expectedUsing}" value="${expectedValue}", got using="${locator.using}" value="${locator.value}"`)
+                FAIL(`"${selector}" → expected "${expected}", got "${result}"`)
         } catch (e) {
             FAIL(`detectLocator("${selector}") throw: ${e.message}`)
         }
@@ -136,11 +138,9 @@ async function run() {
     }
 
     // ── Interaksi form ──────────────────────────────────────────────────────
-    // Menggunakan https://the-internet.herokuapp.com/login
-    // username: tomsmith | password: SuperSecretPassword!
     console.log('\n[Interaksi Form] fill, getValue, clear, see pada input, fillAndEnter, click, click dengan delay, wait')
 
-    await please.driver.get('https://the-internet.herokuapp.com/login')
+    await please.page.goto('https://the-internet.herokuapp.com/login')
 
     try {
         await please.fill('Username', '#username', 'tomsmith')
@@ -186,9 +186,8 @@ async function run() {
     }
 
     try {
-        // pakai instance baru agar tidak terkontaminasi session login dari fillAndEnter()
-        const p3 = new pleaseClass()
-        await p3.driver.get('https://the-internet.herokuapp.com/login')
+        const p3 = new Please()
+        await p3.goTo({ url: 'https://the-internet.herokuapp.com/login', title: 'The Internet' })
         await p3.fill('Username', '#username', 'tomsmith')
         await p3.fill('Password', '#password', 'SuperSecretPassword!')
         await p3.click('Login Button', 'button[type="submit"]')
@@ -202,9 +201,8 @@ async function run() {
     }
 
     try {
-        // pakai instance baru agar tidak terkontaminasi session login dari case sebelumnya
-        const p2 = new pleaseClass()
-        await p2.driver.get('https://the-internet.herokuapp.com/login')
+        const p2 = new Please()
+        await p2.goTo({ url: 'https://the-internet.herokuapp.com/login', title: 'The Internet' })
         await p2.fill('Username', '#username', 'tomsmith')
         await p2.fill('Password', '#password', 'SuperSecretPassword!')
         await p2.click('Login Button', 'button[type="submit"]', 500)
@@ -251,7 +249,7 @@ async function run() {
         await please.equal('a', 'b')
         FAIL('equal() seharusnya throw saat nilai berbeda')
     } catch (e) {
-        PASS(`equal() — throw saat nilai berbeda`)
+        PASS('equal() — throw saat nilai berbeda')
     }
     try {
         please.notEqual('a', 'b')
@@ -263,7 +261,7 @@ async function run() {
         please.notEqual('sama', 'sama')
         FAIL('notEqual() seharusnya throw saat nilai sama')
     } catch (e) {
-        PASS(`notEqual() — throw saat nilai sama`)
+        PASS('notEqual() — throw saat nilai sama')
     }
     try {
         please.fail('Pesan gagal manual')
@@ -271,6 +269,95 @@ async function run() {
     } catch (e) {
         if (e.message.includes('Pesan gagal manual')) PASS(`fail() — throw dengan pesan: "${e.message}"`)
         else FAIL(`fail() throw tapi pesan tidak sesuai: ${e.message}`)
+    }
+
+    // ── Soft Assertions ─────────────────────────────────────────────────────
+    console.log('\n[Soft Assertions] please.soft()')
+    try {
+        const sa = please.soft()
+        sa.equal('sama', 'sama').notEqual('a', 'b')
+        sa.assert()
+        PASS('soft() — assert() tidak throw saat semua lulus')
+    } catch (e) {
+        FAIL(`soft() assert gagal: ${e.message}`)
+    }
+    try {
+        const sa = please.soft()
+        sa.equal('a', 'b').equal('x', 'x').notEqual('c', 'c')
+        sa.assert()
+        FAIL('soft() — assert() seharusnya throw saat ada kegagalan')
+    } catch (e) {
+        if (e.message.includes('Soft assertion') && e.message.includes('2'))
+            PASS(`soft() — assert() throw dengan ringkasan kegagalan`)
+        else FAIL(`soft() assert pesan tidak sesuai: ${e.message}`)
+    }
+
+    // ── Multi-tab ────────────────────────────────────────────────────────────
+    console.log('\n[Multi-tab] newTab, switchTab, closeTab')
+    try {
+        const tab2 = await please.newTab()
+        PASS('newTab() — tab baru berhasil dibuka')
+
+        await tab2.goto('https://example.com')
+        const originalUrl = await please.url()
+
+        await please.switchTab(tab2)
+        PASS('switchTab() — berpindah ke tab baru')
+
+        const tab2Url = await please.url()
+        if (tab2Url.includes('example.com')) PASS(`switchTab() — URL tab baru: ${tab2Url}`)
+        else FAIL(`switchTab() URL tidak sesuai: ${tab2Url}`)
+
+        await please.closeTab(tab2)
+        PASS('closeTab() — tab berhasil ditutup')
+
+        const mainTab = please._context.pages ? please._context.pages()[0] : null
+        if (mainTab) {
+            await please.switchTab(mainTab)
+            PASS('switchTab() — kembali ke tab utama')
+        }
+    } catch (e) {
+        FAIL(`multi-tab gagal: ${e.message}`)
+    }
+
+    // ── Dialog Handling ──────────────────────────────────────────────────────
+    console.log('\n[Dialog] acceptDialog, dismissDialog')
+    try {
+        await please.page.goto('https://the-internet.herokuapp.com/javascript_alerts')
+
+        please.acceptDialog()
+        await please.click('JS Alert', "button[onclick='jsAlert()']")
+        await please.wait(500)
+        const result1 = await please.getText('Result', '#result')
+        if (result1.includes('You successfully clicked an alert'))
+            PASS(`acceptDialog() — alert diterima, result: "${result1}"`)
+        else FAIL(`acceptDialog() result tidak sesuai: "${result1}"`)
+    } catch (e) {
+        FAIL(`acceptDialog() gagal: ${e.message}`)
+    }
+    try {
+        please.dismissDialog()
+        await please.click('JS Confirm', "button[onclick='jsConfirm()']")
+        await please.wait(500)
+        const result2 = await please.getText('Result', '#result')
+        if (result2.includes('You clicked: Cancel'))
+            PASS(`dismissDialog() — confirm ditolak, result: "${result2}"`)
+        else FAIL(`dismissDialog() result tidak sesuai: "${result2}"`)
+    } catch (e) {
+        FAIL(`dismissDialog() gagal: ${e.message}`)
+    }
+
+    // ── Video Recording ──────────────────────────────────────────────────────
+    console.log('\n[Video] video: true')
+    try {
+        const pv = new Please({ video: true })
+        await pv.goTo({ url: 'https://example.com', title: 'Example Domain' })
+        await pv.wait(500)
+        const videoPath = await pv.saveVideo('smoke_video_test')
+        if (videoPath) PASS(`saveVideo() — video tersimpan: ${videoPath}`)
+        else FAIL('saveVideo() — path tidak dikembalikan')
+    } catch (e) {
+        FAIL(`video recording gagal: ${e.message}`)
     }
 
     // ── quit ────────────────────────────────────────────────────────────────

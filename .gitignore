@@ -4,3 +4,7 @@ node_modules
 example/.env
 .idea/
 example/report/
+coverage/
+.coverage/
+screenshots/
+videos/

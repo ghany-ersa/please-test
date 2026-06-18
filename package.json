@@ -1,31 +1,34 @@
 {
     "name": "please-test",
-    "version": "1.2.0",
-    "description": "Selenium WebDriver abstraction library for expressive and readable automation testing",
+    "version": "2.0.0",
+    "description": "Playwright abstraction library for expressive and readable automation testing",
     "main": "master/input.js",
     "scripts": {
-        "test": "node test/smoke.test.js"
+        "test": "for f in test/*.test.js; do node \"$f\" || exit 1; done"
     },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/ghany-ersa/please-test.git"
     },
     "keywords": [
-        "selenium",
-        "webdriver",
+        "playwright",
         "automation",
         "testing",
-        "e2e"
+        "e2e",
+        "browser"
     ],
     "author": "ghany-ersa <ghanyersa24@gmail.com>",
     "license": "MIT",
     "peerDependencies": {
-        "selenium-webdriver": "^4.45.0"
+        "playwright": "^1.0.0"
     },
     "engines": {
         "node": ">=14.0.0"
     },
     "files": [
         "master/"
-    ]
+    ],
+    "devDependencies": {
+        "playwright": "^1.61.0"
+    }
 }

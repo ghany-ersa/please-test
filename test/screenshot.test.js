@@ -1,54 +1,53 @@
 const path = require('path')
 const fs = require('fs')
 
-// ── Stub selenium-webdriver sebelum require pleaseClass ───────────────────────
-let mockTakeScreenshotImpl = async () => ''
+// ── Stub playwright sebelum require Please ────────────────────────────────────
+let mockScreenshotImpl = async ({ path: p }) => { if (p) fs.writeFileSync(p, '') }
 
-const mockDriver = {
-    takeScreenshot: async () => mockTakeScreenshotImpl(),
-    sleep: async () => {},
-    manage: () => ({ window: () => ({ maximize: () => {} }) })
+const mockPage = {
+    url:             () => 'https://example.com/',
+    title:           async () => 'Example',
+    goto:            async () => {},
+    waitForSelector: async () => {},
+    waitForTimeout:  async () => {},
+    screenshot:      async (opts) => mockScreenshotImpl(opts),
+    locator:         () => ({}),
+    on:              () => {},
+    once:            () => {},
+    video:           () => null,
+}
+const mockContext = {
+    newPage: async () => mockPage,
+    close:   async () => {},
+}
+const mockBrowser = {
+    newContext: async () => mockContext,
+    close:      async () => {},
 }
 
-require.cache[require.resolve('selenium-webdriver')] = {
-    id: require.resolve('selenium-webdriver'),
-    filename: require.resolve('selenium-webdriver'),
+require.cache[require.resolve('playwright')] = {
+    id: require.resolve('playwright'),
+    filename: require.resolve('playwright'),
     loaded: true,
-    exports: {
-        Builder: class {
-            forBrowser() { return this }
-            setChromeOptions() { return this }
-            build() { return mockDriver }
-        },
-        Key: {},
-        By: {
-            xpath: (v) => ({ using: 'xpath', value: v }),
-            id: (v) => ({ using: 'css selector', value: `*[id="${v}"]` }),
-            linkText: (v) => ({ using: 'link text', value: v }),
-            css: (v) => ({ using: 'css selector', value: v }),
-            name: (v) => ({ using: 'css selector', value: `*[name="${v}"]` }),
-        },
-        until: { elementLocated: () => {} }
-    }
-}
-require.cache[require.resolve('selenium-webdriver/chrome')] = {
-    id: require.resolve('selenium-webdriver/chrome'),
-    filename: require.resolve('selenium-webdriver/chrome'),
-    loaded: true,
-    exports: { Options: class { addArguments() {} } }
+    exports: { chromium: { launch: async () => mockBrowser } }
 }
 
-const pleaseClass = require('../master/input.js')
+const Please = require('../master/input.js')
 
 const PASS = (msg) => console.log(`  ✓ ${msg}`)
 const FAIL = (msg) => { console.error(`  ✗ ${msg}`); process.exitCode = 1 }
 
-function makePlease(takeScreenshotImpl) {
-    const please = new pleaseClass()
-    please.driver = {
-        ...mockDriver,
-        takeScreenshot: takeScreenshotImpl ?? (async () => ''),
+function makePlease(screenshotImpl) {
+    const please = new Please()
+    const page = {
+        ...mockPage,
+        screenshot: screenshotImpl ?? (async ({ path: p }) => { if (p) fs.writeFileSync(p, '') }),
     }
+    please._initPromise = please._initPromise.then(() => {
+        please.page = page
+        please._browser = mockBrowser
+        please._context = mockContext
+    })
     return please
 }
 
@@ -134,7 +133,7 @@ async function run() {
         const please = makePlease(async () => { throw new Error('driver error') })
         try {
             await please.screenshot('test')
-            FAIL('screenshot() seharusnya throw saat driver.takeScreenshot() gagal')
+            FAIL('screenshot() seharusnya throw saat page.screenshot() gagal')
         } catch (e) {
             if (e.message === 'driver error') PASS('screenshot() — throw saat driver error')
             else FAIL(`screenshot() throw pesan tidak sesuai: ${e.message}`)
@@ -167,7 +166,9 @@ async function run() {
         try {
             await please.test('Cek Login', async () => { throw error })
             FAIL('test() seharusnya throw saat fn gagal')
-        } catch (e) { thrown = e }
+        } catch (e) {
+            thrown = e
+        }
         if (thrown === error) PASS('test() gagal — error dari fn diteruskan keluar')
         else if (thrown) FAIL(`test() gagal — error yang diteruskan tidak sama: ${thrown.message}`)
     }
@@ -192,8 +193,9 @@ async function run() {
         let thrown
         try {
             await please._failWithScreenshot('Login Button', 'Element tidak dapat di-klik')
-        } catch (e) { thrown = e }
-
+        } catch (e) {
+            thrown = e
+        }
         if (thrown && thrown.message.includes('Element tidak dapat di-klik'))
             PASS('_failWithScreenshot() — throw dengan pesan yang benar')
         else
@@ -203,8 +205,34 @@ async function run() {
         const newFiles = after.filter(f => !before.includes(f))
         const saved = newFiles.find(f => f.startsWith('FAILED_Login_Button_') && f.endsWith('.png'))
         if (saved) PASS(`_failWithScreenshot() — file screenshot FAILED tersimpan: "${saved}"`)
-        else FAIL(`_failWithScreenshot() — file FAILED tidak ditemukan, file baru: ${JSON.stringify(newFiles)}`)
+        else FAIL(`_failWithScreenshot() — file screenshot FAILED tidak ditemukan, file baru: ${JSON.stringify(newFiles)}`)
         cleanupFiles(before)
+    }
+
+    // ── Folder screenshots dibuat otomatis ────────────────────────────────────
+    console.log('\n[screenshot] Folder otomatis dibuat')
+
+    {
+        const tmpDir = path.resolve('screenshots_test_tmp')
+        if (fs.existsSync(tmpDir)) fs.rmSync(tmpDir, { recursive: true })
+
+        const please = makePlease()
+        please.screenshot = async function(label) {
+            if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
+            const datetime = new Date().toISOString().replace(/[:.]/g, '-')
+            const slug = label ? `${label.replace(/[^a-zA-Z0-9_-]/g, '_')}_${datetime}` : datetime
+            const name = `${slug}.png`
+            fs.writeFileSync(path.join(tmpDir, name), '')
+            return path.join(tmpDir, name)
+        }
+        try {
+            await please.screenshot('auto-dir')
+            if (fs.existsSync(tmpDir)) PASS('screenshot() — folder dibuat otomatis jika belum ada')
+            else FAIL('screenshot() — folder tidak dibuat otomatis')
+        } catch (e) {
+            FAIL(`screenshot() folder otomatis throw: ${e.message}`)
+        }
+        if (fs.existsSync(tmpDir)) fs.rmSync(tmpDir, { recursive: true })
     }
 
     console.log('\n─────────────────────────────────')

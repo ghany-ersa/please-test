@@ -1,23 +1,27 @@
 # please-test
 
-**please-test** adalah Selenium WebDriver abstraction library untuk JavaScript yang menyederhanakan interaksi DOM agar automation test bisa ditulis lebih ringkas dan ekspresif.
+**please-test** adalah Playwright abstraction library untuk JavaScript yang menyederhanakan interaksi DOM agar automation test bisa ditulis lebih ringkas dan ekspresif.
 
 ## Filosofi
 
-Daripada menulis boilerplate Selenium berulang kali di setiap test, please-test membungkus operasi umum (klik, input, scroll, wait, assertion) ke dalam satu objek `please` yang bisa langsung dipakai di semua spec file.
+Daripada menulis boilerplate Playwright berulang kali di setiap test, please-test membungkus operasi umum (klik, input, scroll, wait, assertion) ke dalam satu objek `please` yang bisa langsung dipakai di semua spec file.
 
 ## Prasyarat
 
 - Node.js >= 14.0.0
-- Google Chrome (ChromeDriver dikelola otomatis oleh `selenium-manager` bawaan Selenium 4)
+- Playwright browsers — jalankan sekali setelah install:
+
+```sh
+npx playwright install
+```
 
 ## Instalasi
 
 ```sh
-npm install please-test selenium-webdriver
+npm install please-test playwright
 ```
 
-> `selenium-webdriver` adalah peer dependency — perlu diinstall di project kamu.
+> `playwright` adalah peer dependency — perlu diinstall di project kamu.
 
 ---
 
@@ -29,10 +33,11 @@ Buat `app.js` sebagai entry point yang menginisialisasi browser dan mengekspos `
 
 ```js
 // app.js
-const pleaseClass = require('please-test')
+const Please = require('please-test')
 
-const please = new pleaseClass()         // headless (default)
-// const please = new pleaseClass({ headed: true })  // tampilkan browser
+const please = new Please()                        // headless chromium (default)
+// const please = new Please({ headed: true })     // tampilkan browser
+// const please = new Please({ browser: 'firefox' }) // ganti browser
 
 module.exports = { please }
 ```
@@ -52,7 +57,7 @@ describe('Login', () => {
         await please.goTo({ url: 'https://myapp.com/login', title: 'Login' })
         await please.fill('input email', '#email', 'user@mail.com')
         await please.fill('input password', '#password', 'secret')
-        await please.click('button login', '//button[@type="submit"]')
+        await please.click('button login', 'button=Login')
         await please.checkWhere({ url: 'https://myapp.com/dashboard', title: 'Dashboard' })
     })
 
@@ -60,7 +65,7 @@ describe('Login', () => {
         await please.goTo({ url: 'https://myapp.com/login', title: 'Login' })
         await please.fill('input email', '#email', 'user@mail.com')
         await please.fill('input password', '#password', 'salah')
-        await please.click('button login', '//button[@type="submit"]')
+        await please.click('button login', 'button=Login')
         await please.checkWhere({ url: 'https://myapp.com/login', title: 'Login' })
     })
 })
@@ -111,8 +116,8 @@ require('./feature/checkout.spec')
         "test": "mocha --recursive --timeout 100000 index.js"
     },
     "dependencies": {
-        "please-test": "^1.0.0",
-        "selenium-webdriver": "^4.0.0"
+        "please-test": "^1.1.0",
+        "playwright": "^1.0.0"
     },
     "devDependencies": {
         "mocha": "^11.0.0"
@@ -134,12 +139,12 @@ class Auth {
     async login(email, password) {
         await this.please.fill('input email', '#email', email)
         await this.please.fill('input password', '#password', password)
-        await this.please.click('button login', '//button[@type="submit"]')
+        await this.please.click('button login', 'button=Login')
     }
 
     async logout() {
         await this.please.click('menu profil', '.user-menu')
-        await this.please.click('button logout', 'link=Logout')
+        await this.please.click('button logout', 'text=Logout')
     }
 }
 module.exports = Auth
@@ -147,10 +152,10 @@ module.exports = Auth
 
 ```js
 // app.js — daftarkan komponen di sini
-const pleaseClass = require('please-test')
+const Please = require('please-test')
 const Auth = require('./components/auth')
 
-const please = new pleaseClass()
+const please = new Please()
 
 module.exports = {
     please,
@@ -176,32 +181,32 @@ describe('Login', () => {
 
 ## Menjalankan Dua Browser Sekaligus
 
-Buat dua instance `pleaseClass` secara terpisah untuk skenario multi-user:
+Buat dua instance `Please` secara terpisah untuk skenario multi-user atau multi-browser:
 
 ```js
 // app.js
-const pleaseClass = require('please-test')
+const Please = require('please-test')
 
-const please  = new pleaseClass()
-const pleaseB = new pleaseClass()
+const please        = new Please({ browser: 'chromium' })
+const pleaseFirefox = new Please({ browser: 'firefox' })
 
-module.exports = { please, pleaseB }
+module.exports = { please, pleaseFirefox }
 ```
 
 ```js
 // feature/multiUser.spec.js
-const { please, pleaseB } = require('../app')
+const { please, pleaseFirefox } = require('../app')
 
 describe('Multi browser', () => {
-    it('dua user login bersamaan', async() => {
+    it('dua user login dari browser berbeda', async() => {
         await please.goTo({ url: 'https://myapp.com/login', title: 'Login' })
-        await pleaseB.goTo({ url: 'https://myapp.com/login', title: 'Login' })
+        await pleaseFirefox.goTo({ url: 'https://myapp.com/login', title: 'Login' })
 
         await please.fill('email user A', '#email', 'userA@mail.com')
-        await pleaseB.fill('email user B', '#email', 'userB@mail.com')
+        await pleaseFirefox.fill('email user B', '#email', 'userB@mail.com')
 
         await please.quit()
-        await pleaseB.quit()
+        await pleaseFirefox.quit()
     })
 })
 ```
@@ -210,14 +215,16 @@ describe('Multi browser', () => {
 
 ## API
 
-`please` adalah instance dari `pleaseClass`.
+`please` adalah instance dari `Please`.
 
 ### Constructor
 
 ```js
-new pleaseClass()                  // headless (default)
-new pleaseClass({ headed: false }) // headless eksplisit
-new pleaseClass({ headed: true })  // browser ditampilkan
+new Please()                           // headless chromium (default)
+new Please({ headed: true })           // browser ditampilkan
+new Please({ browser: 'firefox' })     // pilih browser: chromium | firefox | webkit
+new Please({ video: true })            // rekam video sesi
+new Please({ headed: true, browser: 'webkit', video: true }) // kombinasi
 ```
 
 ### Navigasi
@@ -263,6 +270,31 @@ new pleaseClass({ headed: true })  // browser ditampilkan
 | `equal(actual, expected, message?)` | Gagal jika `actual !== expected` |
 | `notEqual(actual, expected, message?)` | Gagal jika `actual === expected` |
 | `fail(message?)` | Gagalkan test secara manual |
+| `soft()` | Kembalikan `SoftAssert` — kumpulkan kegagalan, baru throw di akhir via `.assert()` |
+
+### Multi-tab
+
+| Method | Deskripsi |
+|---|---|
+| `newTab()` | Buka tab baru, kembalikan page object |
+| `switchTab(tab)` | Pindah active page ke tab yang dipilih |
+| `closeTab(tab)` | Tutup tab tertentu |
+
+### Dialog
+
+| Method | Deskripsi |
+|---|---|
+| `acceptDialog(text?)` | Accept alert/confirm/prompt berikutnya; `text` untuk prompt |
+| `dismissDialog()` | Dismiss dialog berikutnya |
+| `onDialog(handler)` | Daftarkan handler permanen untuk semua dialog |
+
+### Screenshot & Video
+
+| Method | Deskripsi |
+|---|---|
+| `screenshot(label?)` | Ambil screenshot, simpan ke folder `screenshots/` |
+| `saveVideo(name?)` | Simpan video sesi ke folder `videos/` (perlu `video: true`) |
+| `setTestName(name)` | Set nama test untuk prefix screenshot otomatis |
 
 ### Lifecycle
 
@@ -274,16 +306,34 @@ new pleaseClass({ headed: true })  // browser ditampilkan
 
 ## Auto-detect Selector
 
-Semua method yang menerima `selector` otomatis mendeteksi tipe locator dari format string — tidak perlu menentukan tipe secara manual:
+Semua method yang menerima `selector` otomatis mendeteksi tipe locator dari format string:
 
 | Format | Tipe | Contoh |
 |---|---|---|
 | Diawali `//` atau `(//` | XPath | `//button[@type="submit"]` |
 | Diawali `#` | ID | `#email` |
-| Diawali `link=` | Link Text | `link=Klik di sini` |
-| Diawali `.`, `[`, atau mengandung karakter CSS (spasi, `>`, `+`, `~`, `.`, `#`, `[`, `:`) | CSS Selector | `.btn-primary`, `form > button`, `[data-id="x"]` |
-| Nama tag HTML (`div`, `h1`, `span`, `input`, dst.) | CSS Tag | `h1`, `button`, `textarea` |
-| Teks biasa lainnya | Name | `username`, `email` |
+| Diawali `text=` | Text content | `text=Klik di sini` |
+| Diawali `role=` | ARIA role | `role=button`, `role=button[name=Submit]` |
+| Diawali `label=` | Label asosiasi | `label=Email` |
+| `tag=Name` (shorthand) | ARIA role + name | `button=Submit`, `a=Masuk`, `select=Kota` |
+| Diawali `.`, `[`, atau mengandung karakter CSS | CSS Selector | `.btn-primary`, `form > button`, `[data-id="x"]` |
+| Nama tag HTML (`div`, `h1`, `input`, dst.) | CSS Tag | `h1`, `textarea` |
+
+> Shorthand `tag=Name` didukung untuk: `button`, `a`, `input`, `select`, `textarea`, `checkbox`, `radio`.
+
+---
+
+## Soft Assertion
+
+Gunakan `soft()` untuk mengumpulkan semua kegagalan sebelum throw — berguna saat ingin memvalidasi banyak field sekaligus:
+
+```js
+const sa = please.soft()
+sa.equal(namaUser, 'Admin')
+sa.equal(roleUser, 'superuser')
+sa.notEqual(statusAkun, 'nonaktif')
+sa.assert() // throw sekaligus dengan semua kegagalan
+```
 
 ---
 
