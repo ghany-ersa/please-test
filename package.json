@@ -6,9 +6,9 @@
     "types": "master/index.d.ts",
     "scripts": {
         "test:unit": "node test/unit.test.js && node test/screenshot.test.js",
-        "test:login": "npx playwright test test/login.spec.js",
+        "test:login": "playwright test test/login.spec.js",
         "test:types": "tsd",
-        "test": "npx playwright test test/smoke.test.js"
+        "test": "playwright test test/smoke.test.js"
     },
     "tsd": {
         "entrypoint": "master/index.d.ts"
