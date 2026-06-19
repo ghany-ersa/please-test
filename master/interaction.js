@@ -4,7 +4,9 @@ async function untilShow(page, label, selector, time = 20000) {
     try {
         await toLocator(page, selector).waitFor({ state: 'visible', timeout: time })
     } catch {
-        throw new Error(`"${label}" tidak muncul setelah ${time / 1000} detik`)
+        const err = new Error(`"${label}" tidak muncul setelah ${time / 1000} detik`)
+        err.stack = err.message
+        throw err
     }
 }
 
