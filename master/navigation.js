@@ -8,6 +8,7 @@ async function goto(page, { url, title }) {
 }
 
 async function verifyPage(page, { url, title }) {
+    await page.waitForLoadState('domcontentloaded')
     if (url) {
         const actual = page.url()
         if (!actual.includes(url))
