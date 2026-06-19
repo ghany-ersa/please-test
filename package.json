@@ -1,10 +1,12 @@
 {
     "name": "please-test",
-    "version": "2.0.0",
-    "description": "Playwright abstraction library for expressive and readable automation testing",
-    "main": "master/input.js",
+    "version": "1.0.0",
+    "description": "Shorthand helper for @playwright/test — expressive locators, readable error messages",
+    "main": "master/index.js",
     "scripts": {
-        "test": "for f in test/*.test.js; do node \"$f\" || exit 1; done"
+        "test:unit": "node test/unit.test.js && node test/screenshot.test.js",
+        "test:login": "npx playwright test test/login.spec.js",
+        "test": "npx playwright test test/smoke.test.js"
     },
     "repository": {
         "type": "git",
@@ -15,12 +17,12 @@
         "automation",
         "testing",
         "e2e",
-        "browser"
+        "shorthand"
     ],
     "author": "ghany-ersa <ghanyersa24@gmail.com>",
     "license": "MIT",
     "peerDependencies": {
-        "playwright": "^1.0.0"
+        "@playwright/test": ">=1.0.0"
     },
     "engines": {
         "node": ">=14.0.0"
@@ -29,6 +31,6 @@
         "master/"
     ],
     "devDependencies": {
-        "playwright": "^1.61.0"
+        "@playwright/test": "^1.61.0"
     }
 }

@@ -1,15 +1,13 @@
 # please-test
 
-**please-test** adalah Playwright abstraction library untuk JavaScript yang menyederhanakan interaksi DOM agar automation test bisa ditulis lebih ringkas dan ekspresif.
+**please-test** adalah shorthand helper untuk `@playwright/test` yang membuat automation test lebih ringkas dan ekspresif.
 
-## Filosofi
-
-Daripada menulis boilerplate Playwright berulang kali di setiap test, please-test membungkus operasi umum (klik, input, scroll, wait, assertion) ke dalam satu objek `please` yang bisa langsung dipakai di semua spec file.
+please-test **tidak** mengelola browser — `page` datang dari fixture `@playwright/test`. please-test hanya menyediakan shorthand untuk operasi umum seperti klik, input, scroll, wait, dan screenshot, dengan pesan error yang lebih deskriptif.
 
 ## Prasyarat
 
 - Node.js >= 14.0.0
-- Playwright browsers — jalankan sekali setelah install:
+- `@playwright/test` — jalankan sekali setelah install:
 
 ```sh
 npx playwright install
@@ -18,69 +16,36 @@ npx playwright install
 ## Instalasi
 
 ```sh
-npm install please-test playwright
+npm install please-test @playwright/test
 ```
 
-> `playwright` adalah peer dependency — perlu diinstall di project kamu.
+> `@playwright/test` adalah peer dependency — perlu diinstall di project kamu.
 
 ---
 
 ## Memulai
 
-### 1. Inisialisasi
-
-Buat `app.js` sebagai entry point yang menginisialisasi browser dan mengekspos `please`:
-
-```js
-// app.js
-const Please = require('please-test')
-
-const please = new Please()                        // headless chromium (default)
-// const please = new Please({ headed: true })     // tampilkan browser
-// const please = new Please({ browser: 'firefox' }) // ganti browser
-
-module.exports = { please }
-```
-
-### 2. Tulis test pertama
-
 ```js
 // feature/login.spec.js
-const { please } = require('../app')
+const { test, expect } = require('@playwright/test')
+const Please = require('please-test')
 
-describe('Login', () => {
-    it('menampilkan halaman login', async() => {
-        await please.goTo({ url: 'https://myapp.com/login', title: 'Login' })
-    })
+test('login berhasil', async ({ page }) => {
+    const please = new Please(page)
 
-    it('login berhasil', async() => {
-        await please.goTo({ url: 'https://myapp.com/login', title: 'Login' })
-        await please.fill('input email', '#email', 'user@mail.com')
-        await please.fill('input password', '#password', 'secret')
-        await please.click('button login', 'button=Login')
-        await please.checkWhere({ url: 'https://myapp.com/dashboard', title: 'Dashboard' })
-    })
-
-    it('login gagal dengan password salah', async() => {
-        await please.goTo({ url: 'https://myapp.com/login', title: 'Login' })
-        await please.fill('input email', '#email', 'user@mail.com')
-        await please.fill('input password', '#password', 'salah')
-        await please.click('button login', 'button=Login')
-        await please.checkWhere({ url: 'https://myapp.com/login', title: 'Login' })
-    })
+    await please.goto({ url: 'https://myapp.com/login', title: 'Login' })
+    await please.fill('input email', '#email', 'user@mail.com')
+    await please.fill('input password', '#password', 'secret')
+    await please.click('button login', 'button=Login')
+    await please.verifyPage({ url: 'https://myapp.com/dashboard', title: 'Dashboard' })
+    await please.see('Pesan Selamat Datang', 'h1', 'Selamat datang!')
 })
 ```
 
-### 3. Jalankan test
+### Jalankan test
 
 ```sh
-node index.js
-```
-
-Atau dengan mocha:
-
-```sh
-mocha --recursive --timeout 100000 index.js
+npx playwright test
 ```
 
 ---
@@ -89,47 +54,34 @@ mocha --recursive --timeout 100000 index.js
 
 ```
 my-project/
-├── app.js              # Inisialisasi please dan komponen
-├── index.js            # Daftar spec yang dijalankan
+├── playwright.config.js
 ├── components/         # Aksi berulang per fitur
 │   ├── auth.js
 │   └── checkout.js
-├── feature/            # Test suite per fitur
+├── tests/              # Test suite per fitur
 │   ├── login.spec.js
 │   └── checkout.spec.js
-├── data/               # URL dan data test
-│   └── main.js
-├── .env                # Konfigurasi environment (tidak di-commit)
 └── package.json
 ```
 
 ```js
-// index.js — aktifkan spec yang ingin dijalankan
-require('./feature/login.spec')
-require('./feature/checkout.spec')
-```
+// playwright.config.js
+const { defineConfig } = require('@playwright/test')
 
-```json
-// package.json
-{
-    "scripts": {
-        "test": "mocha --recursive --timeout 100000 index.js"
+module.exports = defineConfig({
+    testDir: './tests',
+    timeout: 30000,
+    use: {
+        headless: true,
+        screenshot: 'only-on-failure',
+        video: 'retain-on-failure',
     },
-    "dependencies": {
-        "please-test": "^1.1.0",
-        "playwright": "^1.0.0"
-    },
-    "devDependencies": {
-        "mocha": "^11.0.0"
-    }
-}
+})
 ```
 
 ---
 
 ## Membungkus Aksi ke dalam Komponen
-
-Kalau aksi yang sama dipakai di banyak test (seperti login), bungkus ke dalam komponen agar test lebih ringkas dan mudah dirawat:
 
 ```js
 // components/auth.js
@@ -151,63 +103,18 @@ module.exports = Auth
 ```
 
 ```js
-// app.js — daftarkan komponen di sini
+// tests/login.spec.js
+const { test, expect } = require('@playwright/test')
 const Please = require('please-test')
-const Auth = require('./components/auth')
+const Auth = require('../components/auth')
 
-const please = new Please()
+test('login berhasil', async ({ page }) => {
+    const please = new Please(page)
+    const auth = new Auth(please)
 
-module.exports = {
-    please,
-    AUTH: new Auth(please)
-}
-```
-
-```js
-// feature/login.spec.js — test jadi lebih ringkas
-const { please, AUTH } = require('../app')
-
-describe('Login', () => {
-    it('login berhasil', async() => {
-        await please.goTo({ url: 'https://myapp.com/login', title: 'Login' })
-        await AUTH.login('user@mail.com', 'secret')
-        await please.checkWhere({ url: 'https://myapp.com/dashboard', title: 'Dashboard' })
-        await AUTH.logout()
-    })
-})
-```
-
----
-
-## Menjalankan Dua Browser Sekaligus
-
-Buat dua instance `Please` secara terpisah untuk skenario multi-user atau multi-browser:
-
-```js
-// app.js
-const Please = require('please-test')
-
-const please        = new Please({ browser: 'chromium' })
-const pleaseFirefox = new Please({ browser: 'firefox' })
-
-module.exports = { please, pleaseFirefox }
-```
-
-```js
-// feature/multiUser.spec.js
-const { please, pleaseFirefox } = require('../app')
-
-describe('Multi browser', () => {
-    it('dua user login dari browser berbeda', async() => {
-        await please.goTo({ url: 'https://myapp.com/login', title: 'Login' })
-        await pleaseFirefox.goTo({ url: 'https://myapp.com/login', title: 'Login' })
-
-        await please.fill('email user A', '#email', 'userA@mail.com')
-        await pleaseFirefox.fill('email user B', '#email', 'userB@mail.com')
-
-        await please.quit()
-        await pleaseFirefox.quit()
-    })
+    await please.goto({ url: 'https://myapp.com/login', title: 'Login' })
+    await auth.login('user@mail.com', 'secret')
+    await please.verifyPage({ url: 'https://myapp.com/dashboard', title: 'Dashboard' })
 })
 ```
 
@@ -215,24 +122,20 @@ describe('Multi browser', () => {
 
 ## API
 
-`please` adalah instance dari `Please`.
+`please` adalah instance dari `Please(page)`.
 
 ### Constructor
 
 ```js
-new Please()                           // headless chromium (default)
-new Please({ headed: true })           // browser ditampilkan
-new Please({ browser: 'firefox' })     // pilih browser: chromium | firefox | webkit
-new Please({ video: true })            // rekam video sesi
-new Please({ headed: true, browser: 'webkit', video: true }) // kombinasi
+const please = new Please(page)   // page dari fixture @playwright/test
 ```
 
 ### Navigasi
 
 | Method | Deskripsi |
 |---|---|
-| `goTo({ url, title })` | Navigasi ke URL dan verifikasi title halaman |
-| `checkWhere({ url, title })` | Verifikasi URL dan title halaman saat ini |
+| `goto({ url, title? })` | Navigasi ke URL; jika `title` diberikan, validasi title halaman |
+| `verifyPage({ url?, title? })` | Verifikasi URL dan/atau title halaman saat ini |
 | `url()` | Ambil URL halaman saat ini |
 | `title()` | Ambil title halaman saat ini |
 
@@ -245,62 +148,29 @@ new Please({ headed: true, browser: 'webkit', video: true }) // kombinasi
 | `fillAndEnter(label, selector, value)` | Isi input dan tekan Enter |
 | `clear(label, selector)` | Kosongkan input field |
 | `scrollTo(label, selector)` | Scroll ke elemen |
-| `uploadFile(label, selector, path)` | Upload file via input[type=file] |
+| `uploadFile(label, selector, path)` | Upload file via `input[type=file]` |
 | `datepicker(label, selector, value)` | Isi input datepicker |
 
 ### Baca Nilai
 
 | Method | Deskripsi |
 |---|---|
-| `see(label, selector, time?)` | Baca konten elemen — otomatis ambil `value` untuk input/textarea/select, `text` untuk elemen lain |
-| `getValue(label, selector, time?)` | Ambil `value` dari input field |
-| `getText(label, selector, time?)` | Ambil teks dari elemen |
+| `see(label, selector, expected?, time?)` | Baca konten elemen — otomatis ambil `value` untuk input/textarea/select, `innerText` untuk elemen lain. Jika `expected` diberikan, throw jika tidak cocok (tetap mengembalikan nilai aktual) |
 
 ### Tunggu
 
 | Method | Deskripsi |
 |---|---|
-| `untilShow(label, selector, time?)` | Tunggu elemen muncul (default 20 detik) |
+| `untilShow(label, selector, time?)` | Tunggu elemen muncul (default 20 detik); throw dengan pesan `label` jika gagal |
 | `wait(ms?)` | Jeda eksplisit (default 2000ms) |
 
-### Assertion
+### Screenshot
 
 | Method | Deskripsi |
 |---|---|
-| `equal(actual, expected, message?)` | Gagal jika `actual !== expected` |
-| `notEqual(actual, expected, message?)` | Gagal jika `actual === expected` |
-| `fail(message?)` | Gagalkan test secara manual |
-| `soft()` | Kembalikan `SoftAssert` — kumpulkan kegagalan, baru throw di akhir via `.assert()` |
+| `screenshot(label?)` | Ambil screenshot, simpan ke folder `screenshots/` dengan nama `label_datetime.png` |
 
-### Multi-tab
-
-| Method | Deskripsi |
-|---|---|
-| `newTab()` | Buka tab baru, kembalikan page object |
-| `switchTab(tab)` | Pindah active page ke tab yang dipilih |
-| `closeTab(tab)` | Tutup tab tertentu |
-
-### Dialog
-
-| Method | Deskripsi |
-|---|---|
-| `acceptDialog(text?)` | Accept alert/confirm/prompt berikutnya; `text` untuk prompt |
-| `dismissDialog()` | Dismiss dialog berikutnya |
-| `onDialog(handler)` | Daftarkan handler permanen untuk semua dialog |
-
-### Screenshot & Video
-
-| Method | Deskripsi |
-|---|---|
-| `screenshot(label?)` | Ambil screenshot, simpan ke folder `screenshots/` |
-| `saveVideo(name?)` | Simpan video sesi ke folder `videos/` (perlu `video: true`) |
-| `setTestName(name)` | Set nama test untuk prefix screenshot otomatis |
-
-### Lifecycle
-
-| Method | Deskripsi |
-|---|---|
-| `quit()` | Tutup browser |
+> Untuk screenshot otomatis saat failure dan video recording, gunakan konfigurasi bawaan `@playwright/test` di `playwright.config.js`.
 
 ---
 
@@ -320,20 +190,6 @@ Semua method yang menerima `selector` otomatis mendeteksi tipe locator dari form
 | Nama tag HTML (`div`, `h1`, `input`, dst.) | CSS Tag | `h1`, `textarea` |
 
 > Shorthand `tag=Name` didukung untuk: `button`, `a`, `input`, `select`, `textarea`, `checkbox`, `radio`.
-
----
-
-## Soft Assertion
-
-Gunakan `soft()` untuk mengumpulkan semua kegagalan sebelum throw — berguna saat ingin memvalidasi banyak field sekaligus:
-
-```js
-const sa = please.soft()
-sa.equal(namaUser, 'Admin')
-sa.equal(roleUser, 'superuser')
-sa.notEqual(statusAkun, 'nonaktif')
-sa.assert() // throw sekaligus dengan semua kegagalan
-```
 
 ---
 

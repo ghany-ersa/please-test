@@ -1,54 +1,22 @@
 const path = require('path')
 const fs = require('fs')
-
-// ── Stub playwright sebelum require Please ────────────────────────────────────
-let mockScreenshotImpl = async ({ path: p }) => { if (p) fs.writeFileSync(p, '') }
-
-const mockPage = {
-    url:             () => 'https://example.com/',
-    title:           async () => 'Example',
-    goto:            async () => {},
-    waitForSelector: async () => {},
-    waitForTimeout:  async () => {},
-    screenshot:      async (opts) => mockScreenshotImpl(opts),
-    locator:         () => ({}),
-    on:              () => {},
-    once:            () => {},
-    video:           () => null,
-}
-const mockContext = {
-    newPage: async () => mockPage,
-    close:   async () => {},
-}
-const mockBrowser = {
-    newContext: async () => mockContext,
-    close:      async () => {},
-}
-
-require.cache[require.resolve('playwright')] = {
-    id: require.resolve('playwright'),
-    filename: require.resolve('playwright'),
-    loaded: true,
-    exports: { chromium: { launch: async () => mockBrowser } }
-}
-
-const Please = require('../master/input.js')
+const Please = require('../master/index.js')
 
 const PASS = (msg) => console.log(`  ✓ ${msg}`)
 const FAIL = (msg) => { console.error(`  ✗ ${msg}`); process.exitCode = 1 }
 
-function makePlease(screenshotImpl) {
-    const please = new Please()
-    const page = {
-        ...mockPage,
-        screenshot: screenshotImpl ?? (async ({ path: p }) => { if (p) fs.writeFileSync(p, '') }),
+function makePage(screenshotImpl) {
+    return {
+        url:             () => 'https://example.com/',
+        title:           async () => 'Example',
+        goto:            async () => {},
+        waitForSelector: async () => {},
+        waitForTimeout:  async () => {},
+        screenshot:      screenshotImpl ?? (async ({ path: p }) => { if (p) fs.writeFileSync(p, '') }),
+        locator:         () => ({}),
+        getByRole:       () => ({}),
+        getByLabel:      () => ({}),
     }
-    please._initPromise = please._initPromise.then(() => {
-        please.page = page
-        please._browser = mockBrowser
-        please._context = mockContext
-    })
-    return please
 }
 
 const SCREENSHOTS_DIR = path.resolve('screenshots')
@@ -71,7 +39,7 @@ async function run() {
 
     {
         const before = createdFiles()
-        const please = makePlease()
+        const please = new Please(makePage())
         let result
         try {
             result = await please.screenshot('login berhasil')
@@ -99,7 +67,7 @@ async function run() {
 
     {
         const before = createdFiles()
-        const please = makePlease()
+        const please = new Please(makePage())
         let result
         try {
             result = await please.screenshot()
@@ -116,7 +84,7 @@ async function run() {
 
     {
         const before = createdFiles()
-        const please = makePlease()
+        const please = new Please(makePage())
         let result
         try {
             result = await please.screenshot('login/gagal & retry!')
@@ -130,7 +98,7 @@ async function run() {
     }
 
     {
-        const please = makePlease(async () => { throw new Error('driver error') })
+        const please = new Please(makePage(async () => { throw new Error('driver error') }))
         try {
             await please.screenshot('test')
             FAIL('screenshot() seharusnya throw saat page.screenshot() gagal')
@@ -140,75 +108,6 @@ async function run() {
         }
     }
 
-    // ── test() ───────────────────────────────────────────────────────────────
-    console.log('\n[test] Wrapper sukses dan gagal')
-
-    {
-        const before = createdFiles()
-        const please = makePlease()
-        try {
-            await please.test('Cek Homepage', async () => {})
-            const after = createdFiles()
-            const newFiles = after.filter(f => !before.includes(f))
-            const saved = newFiles.find(f => f.startsWith('PASSED_Cek_Homepage_') && f.endsWith('.png'))
-            if (saved) PASS(`test() sukses — file screenshot PASSED tersimpan: "${saved}"`)
-            else FAIL(`test() sukses — file screenshot PASSED tidak ditemukan, file baru: ${JSON.stringify(newFiles)}`)
-        } catch (e) {
-            FAIL(`test() sukses throw: ${e.message}`)
-        }
-        cleanupFiles(before)
-    }
-
-    {
-        const please = makePlease()
-        const error = new Error('element tidak ditemukan')
-        let thrown
-        try {
-            await please.test('Cek Login', async () => { throw error })
-            FAIL('test() seharusnya throw saat fn gagal')
-        } catch (e) {
-            thrown = e
-        }
-        if (thrown === error) PASS('test() gagal — error dari fn diteruskan keluar')
-        else if (thrown) FAIL(`test() gagal — error yang diteruskan tidak sama: ${thrown.message}`)
-    }
-
-    {
-        const please = makePlease()
-        let screenshotCalled = false
-        please.screenshot = async () => { screenshotCalled = true; return 'dummy.png' }
-        try {
-            await please.test('Cek Form', async () => { throw new Error('gagal') })
-        } catch {}
-        if (!screenshotCalled) PASS('test() gagal — screenshot PASSED tidak diambil saat fn throw')
-        else FAIL('test() gagal — screenshot PASSED seharusnya tidak diambil saat fn throw')
-    }
-
-    // ── _failWithScreenshot() ─────────────────────────────────────────────────
-    console.log('\n[_failWithScreenshot] Screenshot + throw')
-
-    {
-        const before = createdFiles()
-        const please = makePlease()
-        let thrown
-        try {
-            await please._failWithScreenshot('Login Button', 'Element tidak dapat di-klik')
-        } catch (e) {
-            thrown = e
-        }
-        if (thrown && thrown.message.includes('Element tidak dapat di-klik'))
-            PASS('_failWithScreenshot() — throw dengan pesan yang benar')
-        else
-            FAIL(`_failWithScreenshot() — pesan tidak sesuai atau tidak throw: ${thrown?.message}`)
-
-        const after = createdFiles()
-        const newFiles = after.filter(f => !before.includes(f))
-        const saved = newFiles.find(f => f.startsWith('FAILED_Login_Button_') && f.endsWith('.png'))
-        if (saved) PASS(`_failWithScreenshot() — file screenshot FAILED tersimpan: "${saved}"`)
-        else FAIL(`_failWithScreenshot() — file screenshot FAILED tidak ditemukan, file baru: ${JSON.stringify(newFiles)}`)
-        cleanupFiles(before)
-    }
-
     // ── Folder screenshots dibuat otomatis ────────────────────────────────────
     console.log('\n[screenshot] Folder otomatis dibuat')
 
@@ -216,14 +115,14 @@ async function run() {
         const tmpDir = path.resolve('screenshots_test_tmp')
         if (fs.existsSync(tmpDir)) fs.rmSync(tmpDir, { recursive: true })
 
-        const please = makePlease()
+        const please = new Please(makePage())
         please.screenshot = async function(label) {
             if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
             const datetime = new Date().toISOString().replace(/[:.]/g, '-')
             const slug = label ? `${label.replace(/[^a-zA-Z0-9_-]/g, '_')}_${datetime}` : datetime
-            const name = `${slug}.png`
-            fs.writeFileSync(path.join(tmpDir, name), '')
-            return path.join(tmpDir, name)
+            const filePath = path.join(tmpDir, `${slug}.png`)
+            fs.writeFileSync(filePath, '')
+            return filePath
         }
         try {
             await please.screenshot('auto-dir')
