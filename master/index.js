@@ -7,9 +7,13 @@ const { screenshot } = require('./screenshot')
 /** @typedef {{ url: string, title?: string }} PageInfo */
 
 class Please {
-    /** @param {import('@playwright/test').Page} page */
-    constructor(page) {
+    /**
+     * @param {import('@playwright/test').Page} page
+     * @param {import('@playwright/test').TestType<any,any>} [test]
+     */
+    constructor(page, test) {
         this.page = page
+        this._step = test ? (name, fn) => test.step(name, fn) : (name, fn) => fn()
     }
 
     // ── Locator ────────────────────────────────────────────────────────────────
@@ -20,35 +24,35 @@ class Please {
 
     // ── Navigasi ───────────────────────────────────────────────────────────────
     /** @param {PageInfo} expected */
-    async goto(expected)                { return goto(this.page, expected) }
+    async goto(expected)                { return this._step(`Go to "${expected.url}"`, () => goto(this.page, expected)) }
     /** @param {PageInfo} expected */
-    async verifyPage(expected)          { return verifyPage(this.page, expected) }
+    async verifyPage(expected)          { return this._step(`Verify page "${expected.url ?? expected.title}"`, () => verifyPage(this.page, expected)) }
     async url()                         { return this.page.url() }
     async title()                       { return this.page.title() }
 
     // ── Tunggu & Interaksi ─────────────────────────────────────────────────────
     /** @param {string} label @param {string} selector @param {number} [time] */
-    async untilShow(label, selector, time)              { return untilShow(this.page, label, selector, time) }
+    async untilShow(label, selector, time)              { return this._step(`Wait "${label}"`, () => untilShow(this.page, label, selector, time)) }
     /** @param {number} [ms] */
     async wait(ms)                                      { return wait(this.page, ms) }
     /** @param {string} label @param {string} selector @param {number} [time] */
-    async click(label, selector, time)                  { return click(this.page, label, selector, time) }
+    async click(label, selector, time)                  { return this._step(`Click "${label}"`, () => click(this.page, label, selector, time)) }
     /** @param {string} label @param {string} selector @param {string} value */
-    async fill(label, selector, value)                  { return fill(this.page, label, selector, value) }
+    async fill(label, selector, value)                  { return this._step(`Fill "${label}"`, () => fill(this.page, label, selector, value)) }
     /** @param {string} label @param {string} selector @param {string} value */
-    async fillAndEnter(label, selector, value)          { return fillAndEnter(this.page, label, selector, value) }
+    async fillAndEnter(label, selector, value)          { return this._step(`Fill and enter "${label}"`, () => fillAndEnter(this.page, label, selector, value)) }
     /** @param {string} label @param {string} selector */
-    async clear(label, selector)                        { return clear(this.page, label, selector) }
+    async clear(label, selector)                        { return this._step(`Clear "${label}"`, () => clear(this.page, label, selector)) }
     /** @param {string} label @param {string} selector */
-    async scrollTo(label, selector)                     { return scrollTo(this.page, label, selector) }
+    async scrollTo(label, selector)                     { return this._step(`Scroll to "${label}"`, () => scrollTo(this.page, label, selector)) }
     /** @param {string} label @param {string} selector @param {string} filePath */
-    async uploadFile(label, selector, filePath)         { return uploadFile(this.page, label, selector, filePath) }
+    async uploadFile(label, selector, filePath)         { return this._step(`Upload "${label}"`, () => uploadFile(this.page, label, selector, filePath)) }
     /** @param {string} label @param {string} selector @param {string} value */
-    async datepicker(label, selector, value)            { return datepicker(this.page, label, selector, value) }
+    async datepicker(label, selector, value)            { return this._step(`Datepicker "${label}"`, () => datepicker(this.page, label, selector, value)) }
 
     // ── Baca Nilai & Assert ────────────────────────────────────────────────────
     /** @param {string} label @param {string} selector @param {string} [expected] @param {number} [time] */
-    async see(label, selector, expected, time)          { return see(this.page, label, selector, expected, time) }
+    async see(label, selector, expected, time)          { return this._step(`See "${label}"`, () => see(this.page, label, selector, expected, time)) }
 
     // ── Screenshot ─────────────────────────────────────────────────────────────
     /** @param {string} [label] */
