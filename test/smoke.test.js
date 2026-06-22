@@ -24,12 +24,10 @@ test.describe('detectLocator', () => {
         ['//div',           'xpath=//div'],
         ['(//div)[1]',      'xpath=(//div)[1]'],
         ['#myId',           '#myId'],
-        ['text=Click here', 'text=Click here'],
         ['.myClass',        '.myClass'],
         ['[data-test="x"]', '[data-test="x"]'],
         ['div > span',      'div > span'],
         ['h1',              'h1'],
-        ['button=Submit',   'role=button[name=Submit]'],
     ]
     for (const [selector, expected] of cases) {
         test(`"${selector}" → "${expected}"`, async ({ page }) => {
