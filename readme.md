@@ -89,12 +89,12 @@ Semua method yang menerima `selector` otomatis mendeteksi tipe locator:
 | `text=` | `text=Klik di sini` |
 | `role=` | `role=button[name=Submit]` |
 | `label=` | `label=Email` |
-| `tag=Name` (shorthand) | `button=Login`, `a=Masuk` |
+| `role=Name` (shorthand) | `button=Login`, `link=Masuk`, `checkbox=Setuju` |
 | CSS selector | `.btn-primary`, `[data-id="x"]` |
 | XPath | `//button[@type="submit"]` |
 | Tag HTML | `h1`, `textarea` |
 
-> Shorthand `tag=Name` didukung untuk: `button`, `a`, `input`, `select`, `textarea`, `checkbox`, `radio`.
+> Shorthand `role=Name` didukung untuk semua ARIA role yang valid di Playwright: `button=Login`, `link=Masuk`, `checkbox=Setuju`, `textbox=Email`, `combobox=Negara`, dst.
 
 ---
 

@@ -2,8 +2,8 @@
     "name": "please-test",
     "version": "1.0.0",
     "description": "Shorthand helper for @playwright/test — expressive locators, readable error messages",
-    "main": "master/index.js",
-    "types": "master/index.d.ts",
+    "main": "lib/index.js",
+    "types": "lib/index.d.ts",
     "scripts": {
         "test:unit": "node test/unit.test.js && node test/screenshot.test.js",
         "test:login": "playwright test test/login.spec.js",
@@ -11,7 +11,7 @@
         "test": "playwright test test/smoke.test.js"
     },
     "tsd": {
-        "entrypoint": "master/index.d.ts"
+        "entrypoint": "lib/index.d.ts"
     },
     "repository": {
         "type": "git",
@@ -33,7 +33,13 @@
         "node": ">=14.0.0"
     },
     "files": [
-        "master/"
+        "lib/index.js",
+        "lib/index.d.ts",
+        "lib/interaction.js",
+        "lib/locator.js",
+        "lib/navigation.js",
+        "lib/query.js",
+        "lib/screenshot.js"
     ],
     "devDependencies": {
         "@playwright/test": "^1.61.0",

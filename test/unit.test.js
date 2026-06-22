@@ -1,4 +1,4 @@
-const Please = require('../master/index.js')
+const Please = require('../lib/index.js')
 
 const PASS = (msg) => console.log(`  ✓ ${msg}`)
 const FAIL = (msg) => { console.error(`  ✗ ${msg}`); process.exitCode = 1 }
@@ -7,15 +7,21 @@ const FAIL = (msg) => { console.error(`  ✗ ${msg}`); process.exitCode = 1 }
 
 function makePage(overrides = {}) {
     return {
-        url:             () => 'https://example.com/',
-        title:           async () => 'Example',
-        goto:            async () => {},
-        waitForSelector: async () => {},
-        waitForTimeout:  async () => {},
-        screenshot:      async () => {},
-        locator:         (sel) => makeLocator(sel),
-        getByRole:       (role, opts) => makeLocator(`role=${role}${opts?.name ? `[name=${opts.name}]` : ''}`),
-        getByLabel:      (label) => makeLocator(`label=${label}`),
+        url:                () => 'https://example.com/',
+        title:              async () => 'Example',
+        goto:               async () => {},
+        waitForSelector:    async () => {},
+        waitForTimeout:     async () => {},
+        waitForLoadState:   async () => {},
+        screenshot:         async () => {},
+        locator:            (sel) => makeLocator(sel),
+        getByRole:          (role, opts) => makeLocator(`role=${role}${opts?.name ? `[name=${opts.name}]` : ''}`),
+        getByLabel:         (label) => makeLocator(`label=${label}`),
+        getByText:          (text) => makeLocator(`text=${text}`),
+        getByPlaceholder:   (ph) => makeLocator(`placeholder=${ph}`),
+        getByAltText:       (alt) => makeLocator(`alt=${alt}`),
+        getByTitle:         (t) => makeLocator(`title=${t}`),
+        getByTestId:        (id) => makeLocator(`testid=${id}`),
         ...overrides,
     }
 }
@@ -303,11 +309,6 @@ async function run() {
         ['//div',             'xpath=//div'],
         ['(//div)[1]',        'xpath=(//div)[1]'],
         ['#myId',             '#myId'],
-        ['text=Click here',   'text=Click here'],
-        ['role=button',       'role=button'],
-        ['label=Email',       'label=Email'],
-        ['button=Submit',     'role=button[name=Submit]'],
-        ['a=Masuk',           'role=a[name=Masuk]'],
         ['.myClass',          '.myClass'],
         ['[data-test="x"]',   '[data-test="x"]'],
         ['div > span',        'div > span'],
@@ -361,6 +362,33 @@ async function run() {
         p.toLocator('#id')
         if (calledSel === '#id') PASS('toLocator() — #id memanggil page.locator("#id")')
         else FAIL(`toLocator() selector salah: ${calledSel}`)
+    }
+    {
+        let calledRole, calledOpts
+        const page = makePage({ getByRole: (r, o) => { calledRole = r; calledOpts = o; return makeLocator('') } })
+        const p = new Please(page)
+        p.toLocator('role=button')
+        if (calledRole === 'button' && calledOpts === undefined)
+            PASS('toLocator() — role=button memanggil getByRole("button") tanpa name')
+        else FAIL(`toLocator() role tanpa name salah: role=${calledRole}, opts=${JSON.stringify(calledOpts)}`)
+    }
+    {
+        let calledRole, calledOpts
+        const page = makePage({ getByRole: (r, o) => { calledRole = r; calledOpts = o; return makeLocator('') } })
+        const p = new Please(page)
+        p.toLocator('button=Submit')
+        if (calledRole === 'button' && calledOpts?.name === 'Submit')
+            PASS('toLocator() — button=Submit memanggil getByRole("button", { name: "Submit" })')
+        else FAIL(`toLocator() shorthand salah: role=${calledRole}, name=${calledOpts?.name}`)
+    }
+    {
+        let calledRole, calledOpts
+        const page = makePage({ getByRole: (r, o) => { calledRole = r; calledOpts = o; return makeLocator('') } })
+        const p = new Please(page)
+        p.toLocator('link=Masuk')
+        if (calledRole === 'link' && calledOpts?.name === 'Masuk')
+            PASS('toLocator() — link=Masuk memanggil getByRole("link", { name: "Masuk" })')
+        else FAIL(`toLocator() link= shorthand salah: role=${calledRole}, name=${calledOpts?.name}`)
     }
 
     // ── screenshot ──────────────────────────────────────────────────────────

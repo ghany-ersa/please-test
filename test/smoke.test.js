@@ -2,7 +2,7 @@
 // Jalankan: npx playwright test test/smoke.test.js
 
 const { test, expect } = require('@playwright/test')
-const Please = require('../master/index.js')
+const Please = require('../lib/index.js')
 
 test.describe('Navigasi', () => {
     test('goto dan verifyPage', async ({ page }) => {

@@ -1,5 +1,5 @@
 const { test } = require('@playwright/test')
-const Please = require('../master/index.js')
+const Please = require('../lib/index.js')
 
 test.describe('Login Test', () => {
   test('login gagal assertion', async ({ page }) => {

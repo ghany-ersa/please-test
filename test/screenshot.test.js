@@ -1,6 +1,6 @@
 const path = require('path')
 const fs = require('fs')
-const Please = require('../master/index.js')
+const Please = require('../lib/index.js')
 
 const PASS = (msg) => console.log(`  ✓ ${msg}`)
 const FAIL = (msg) => { console.error(`  ✗ ${msg}`); process.exitCode = 1 }
