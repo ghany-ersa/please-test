@@ -33,6 +33,9 @@ function makeLocator(sel, overrides = {}) {
         fill:                   async () => {},
         press:                  async () => {},
         clear:                  async () => {},
+        check:                  async () => {},
+        uncheck:                async () => {},
+        isChecked:              async () => false,
         inputValue:             async () => 'value',
         innerText:              async () => 'text',
         scrollIntoViewIfNeeded: async () => {},
@@ -223,6 +226,51 @@ async function run() {
         await p.clear('Field', '#input')
         if (cleared) PASS('clear() — memanggil locator.clear()')
         else FAIL('clear() tidak memanggil clear()')
+    }
+
+    // ── check / uncheck ─────────────────────────────────────────────────────
+    console.log('\n[check / uncheck]')
+    {
+        let checked = false
+        const locator = makeLocator('#agree', { check: async () => { checked = true } })
+        const page = makePage({ locator: () => locator, waitForSelector: async () => {} })
+        const p = new Please(page)
+        await p.check('Agree', '#agree')
+        if (checked) PASS('check() — memanggil locator.check()')
+        else FAIL('check() tidak memanggil check()')
+    }
+    {
+        let unchecked = false
+        const locator = makeLocator('#agree', { uncheck: async () => { unchecked = true } })
+        const page = makePage({ locator: () => locator, waitForSelector: async () => {} })
+        const p = new Please(page)
+        await p.uncheck('Agree', '#agree')
+        if (unchecked) PASS('uncheck() — memanggil locator.uncheck()')
+        else FAIL('uncheck() tidak memanggil uncheck()')
+    }
+
+    // ── isChecked ───────────────────────────────────────────────────────────
+    console.log('\n[isChecked]')
+    {
+        const locator = makeLocator('#agree', { isChecked: async () => true })
+        const page = makePage({ locator: () => locator, waitForSelector: async () => {} })
+        const p = new Please(page)
+        const val = await p.isChecked('Agree', '#agree')
+        if (val === true) PASS('isChecked() — mengembalikan status checked')
+        else FAIL(`isChecked() nilai tidak sesuai: ${val}`)
+    }
+    {
+        const locator = makeLocator('#agree', { isChecked: async () => true })
+        const page = makePage({ locator: () => locator, waitForSelector: async () => {} })
+        const p = new Please(page)
+        try {
+            await p.isChecked('Agree', '#agree', false)
+            FAIL('isChecked() dengan expected seharusnya throw saat tidak cocok')
+        } catch (e) {
+            if (e.message.includes('[Agree]') && e.message.includes('false') && e.message.includes('true'))
+                PASS('isChecked() dengan expected — throw dengan label + expected + received')
+            else FAIL(`isChecked() dengan expected pesan tidak sesuai: ${e.message}`)
+        }
     }
 
     // ── see ─────────────────────────────────────────────────────────────────

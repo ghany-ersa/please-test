@@ -28,9 +28,12 @@ export default class Please {
     scrollTo(label: string, selector: string): Promise<void>
     uploadFile(label: string, selector: string, filePath: string): Promise<void>
     datepicker(label: string, selector: string, value: string): Promise<void>
+    check(label: string, selector: string): Promise<void>
+    uncheck(label: string, selector: string): Promise<void>
 
     // ── Baca Nilai & Assert ────────────────────────────────────────────────────
     see(label: string, selector: string, expected?: string, timeout?: number): Promise<string>
+    isChecked(label: string, selector: string, expected?: boolean, timeout?: number): Promise<boolean>
 
     // ── Screenshot ─────────────────────────────────────────────────────────────
     screenshot(label?: string): Promise<string>
