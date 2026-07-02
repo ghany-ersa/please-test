@@ -1,22 +1,19 @@
 import { expectType, expectError } from 'tsd'
 import { Page, Locator } from '@playwright/test'
-import Please, { PageTarget } from './index'
+import Please from './index'
 
 declare const page: Page
 const please = new Please(page)
-
-// ── PageTarget ─────────────────────────────────────────────────────────────────
-const target: PageTarget = { url: '/login' }
-const targetWithTitle: PageTarget = { url: '/login', title: 'Login' }
 
 // ── Locator ────────────────────────────────────────────────────────────────────
 expectType<string>(please.detectLocator('#id'))
 expectType<Locator>(please.toLocator('#id'))
 
 // ── Navigasi ───────────────────────────────────────────────────────────────────
-expectType<Promise<void>>(please.goto(target))
-expectType<Promise<void>>(please.goto(targetWithTitle))
-expectType<Promise<void>>(please.verifyPage(target))
+expectType<Promise<void>>(please.goto('/login'))
+expectType<Promise<void>>(please.goto('/login', 'Login'))
+expectType<Promise<void>>(please.verifyPage('/login'))
+expectType<Promise<void>>(please.verifyPage('/login', 'Login'))
 expectType<Promise<string>>(please.url())
 expectType<Promise<string>>(please.title())
 
@@ -45,6 +42,6 @@ expectType<Promise<string>>(please.screenshot('nama-screenshot'))
 
 // ── Error cases ────────────────────────────────────────────────────────────────
 expectError(new Please())
-expectError(please.goto('/login'))
+expectError(please.goto(123))
 expectError(please.fill(123, '#el', 'value'))
 expectError(please.see('label', '#el', 123))

@@ -1,10 +1,5 @@
 import { Page, Locator } from '@playwright/test'
 
-export interface PageTarget {
-    url: string
-    title?: string
-}
-
 export default class Please {
     constructor(page: Page)
 
@@ -13,8 +8,8 @@ export default class Please {
     toLocator(selector: string): Locator
 
     // ── Navigasi ───────────────────────────────────────────────────────────────
-    goto(target: PageTarget): Promise<void>
-    verifyPage(target: PageTarget): Promise<void>
+    goto(url: string, title?: string): Promise<void>
+    verifyPage(url: string, title?: string): Promise<void>
     url(): Promise<string>
     title(): Promise<string>
 

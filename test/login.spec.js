@@ -8,13 +8,13 @@ test.describe('Login — practicetestautomation.com', () => {
     test('login berhasil dengan kredensial valid', async ({ page }) => {
         const please = new Please(page)
 
-        await please.goto({ url: URL, title: 'Test Login | Practice Test Automation' })
+        await please.goto(URL, 'Test Login | Practice Test Automation')
 
         await please.fill('Username', '#username', 'student')
         await please.fill('Password', '#password', 'Password123')
         await please.click('Login Button', '#submit')
 
-        await please.verifyPage({ url: '/logged-in-successfully/' })
+        await please.verifyPage('/logged-in-successfully/')
         await please.see('Pesan Sukses', 'h1', 'Logged In Successfully')
         await please.screenshot('login-berhasil')
     })
@@ -22,7 +22,7 @@ test.describe('Login — practicetestautomation.com', () => {
     test('login gagal — username salah', async ({ page }) => {
         const please = new Please(page)
 
-        await please.goto({ url: URL, title: 'Test Login | Practice Test Automation' })
+        await please.goto(URL, 'Test Login | Practice Test Automation')
 
         await please.fill('Username', '#username', 'wronguser')
         await please.fill('Password', '#password', 'Password123')
@@ -35,7 +35,7 @@ test.describe('Login — practicetestautomation.com', () => {
     test('login gagal — password salah', async ({ page }) => {
         const please = new Please(page)
 
-        await please.goto({ url: URL, title: 'Test Login | Practice Test Automation' })
+        await please.goto(URL, 'Test Login | Practice Test Automation')
 
         await please.fill('Username', '#username', 'student')
         await please.fill('Password', '#password', 'wrongpassword')
@@ -48,16 +48,16 @@ test.describe('Login — practicetestautomation.com', () => {
     test('logout setelah login berhasil', async ({ page }) => {
         const please = new Please(page)
 
-        await please.goto({ url: URL, title: 'Test Login | Practice Test Automation' })
+        await please.goto(URL, 'Test Login | Practice Test Automation')
 
         await please.fill('Username', '#username', 'student')
         await please.fill('Password', '#password', 'Password123')
         await please.click('Login Button', '#submit')
 
-        await please.verifyPage({ url: '/logged-in-successfully/' })
+        await please.verifyPage('/logged-in-successfully/')
         await please.click('Log Out Button', 'text=Log out')
 
-        await please.verifyPage({ url: URL })
+        await please.verifyPage(URL)
         await please.screenshot('setelah-logout')
     })
 

@@ -51,7 +51,7 @@ async function run() {
         const page = makePage({ title: async () => 'My App' })
         const p = new Please(page)
         try {
-            await p.goto({ url: 'https://example.com', title: 'My App' })
+            await p.goto('https://example.com', 'My App')
             PASS('goto() — sukses saat title cocok')
         } catch (e) { FAIL(`goto() throw: ${e.message}`) }
     }
@@ -59,7 +59,7 @@ async function run() {
         const page = makePage({ title: async () => 'Wrong Title' })
         const p = new Please(page)
         try {
-            await p.goto({ url: 'https://example.com', title: 'My App' })
+            await p.goto('https://example.com', 'My App')
             FAIL('goto() seharusnya throw saat title tidak cocok')
         } catch (e) {
             if (e.message.includes('Title tidak sesuai')) PASS('goto() — throw saat title tidak cocok')
@@ -70,7 +70,7 @@ async function run() {
         const page = makePage({ title: async () => 'Any' })
         const p = new Please(page)
         try {
-            await p.goto({ url: 'https://example.com' })
+            await p.goto('https://example.com')
             PASS('goto() — sukses tanpa title validation')
         } catch (e) { FAIL(`goto() tanpa title throw: ${e.message}`) }
     }
@@ -81,7 +81,7 @@ async function run() {
         const page = makePage({ url: () => 'https://example.com/page', title: async () => 'Page' })
         const p = new Please(page)
         try {
-            await p.verifyPage({ url: 'example.com', title: 'Page' })
+            await p.verifyPage('example.com', 'Page')
             PASS('verifyPage() — sukses saat url + title cocok')
         } catch (e) { FAIL(`verifyPage() throw: ${e.message}`) }
     }
@@ -89,7 +89,7 @@ async function run() {
         const page = makePage({ url: () => 'https://other.com/' })
         const p = new Please(page)
         try {
-            await p.verifyPage({ url: 'example.com' })
+            await p.verifyPage('example.com')
             FAIL('verifyPage() seharusnya throw saat url tidak cocok')
         } catch (e) {
             if (e.message.includes('URL tidak sesuai')) PASS('verifyPage() — throw saat url tidak cocok')

@@ -4,7 +4,7 @@ const Please = require('../lib/index.js')
 test.describe('Login Test', () => {
   test('login gagal assertion', async ({ page }) => {
     const please = new Please(page)
-    await please.goto({ url: 'https://practicetestautomation.com/practice-test-login/' })
+    await please.goto('https://practicetestautomation.com/practice-test-login/')
     await please.fill('Username', '#username', 'student')
     await please.fill('Password', '#password', 'Password123')
     await please.click('Submit', '#submit')

@@ -16,16 +16,18 @@ npm install please-test @playwright/test && npx playwright install
 
 ```js
 const { test } = require('@playwright/test')
-const Please = require('please-test')
+const { createApp } = require('../app')
+
 
 test('login berhasil', async ({ page }) => {
-    const please = new Please(page)
-
-    await please.goto({ url: 'https://myapp.com/login' })
-    await please.fill('Username', '#username', 'student')
-    await please.fill('Password', '#password', 'secret')
-    await please.click('Tombol Login', 'button=Login')
-    await please.see('Pesan Sukses', 'h1', 'Dashboard')
+    const { please } = createApp(page, test)
+    await please.goto('https://myapp.com/login')
+    await please.fill('input username', '#username', 'student')
+    await please.fill('input password', '#password', 'Password123')
+    await please.click('button submit', '#submit')
+    await please.verifyPage('https://myapp.com/dashboard')
+    await please.see('teks sukses', 'h1', 'Logged In Successfully')
+    await please.click('button logout', 'text=Log out')
 })
 ```
 
@@ -39,8 +41,8 @@ test('login berhasil', async ({ page }) => {
 
 | Method | Deskripsi |
 |---|---|
-| `goto({ url, title? })` | Navigasi ke URL; jika `title` diberikan, validasi title halaman |
-| `verifyPage({ url?, title? })` | Verifikasi URL dan/atau title halaman saat ini |
+| `goto(url, title?)` | Navigasi ke URL; jika `title` diberikan, validasi title halaman |
+| `verifyPage(url, title?)` | Verifikasi URL dan/atau title halaman saat ini |
 | `url()` | Ambil URL halaman saat ini |
 | `title()` | Ambil title halaman saat ini |
 
